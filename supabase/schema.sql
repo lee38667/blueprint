@@ -32,12 +32,31 @@ create table if not exists workouts (
   created_at timestamptz default now()
 );
 
+create table if not exists workout_logs (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) not null,
+  workout_id uuid references workouts(id) on delete cascade,
+  performed_at timestamptz default now(),
+  metrics jsonb,
+  notes text
+);
+
 create table if not exists finance_summary (
   id uuid default gen_random_uuid() primary key,
   user_id uuid references auth.users(id) not null,
+  balance numeric default 0,
   savings numeric default 0,
   debt numeric default 0,
   updated_at timestamptz default now()
+);
+
+create table if not exists finance_history (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) not null,
+  recorded_at timestamptz default now(),
+  balance numeric not null,
+  delta numeric,
+  note text
 );
 
 create table if not exists skills (
