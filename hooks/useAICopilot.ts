@@ -1,12 +1,14 @@
 import { useState } from 'react'
 
-export function useAICopilot(){
+type Mode = 'mood' | 'focus'
+
+export function useAICopilot() {
   const [insights, setInsights] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function analyzeMood(mood: string){
-    if (!mood) return
+  async function requestInsight(mood: string, mode: Mode = 'mood') {
+    if (!mood && mode === 'mood') return
     setLoading(true)
     setError(null)
 
@@ -14,7 +16,7 @@ export function useAICopilot(){
       const res = await fetch('/api/ai-copilot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mood })
+        body: JSON.stringify({ mood, mode })
       })
 
       if (!res.ok) {
@@ -32,7 +34,15 @@ export function useAICopilot(){
     }
   }
 
-  return { insights, loading, error, analyzeMood }
+  async function analyzeMood(mood: string) {
+    return requestInsight(mood, 'mood')
+  }
+
+  async function focusToday(mood: string) {
+    return requestInsight(mood, 'focus')
+  }
+
+  return { insights, loading, error, analyzeMood, focusToday }
 }
 
 export default useAICopilot

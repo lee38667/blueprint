@@ -85,4 +85,36 @@ create table if not exists ai_insights (
   created_at timestamptz default now()
 );
 
+create table if not exists motivations (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) not null,
+  kind text default 'quote', -- quote | goal-snippet | image
+  title text,
+  body text,
+  image_url text,
+  tags text[],
+  created_at timestamptz default now()
+);
+
+create table if not exists goals (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) not null,
+  title text not null,
+  category text,
+  target_date date,
+  status text default 'active', -- active | paused | completed
+  progress_note text,
+  created_at timestamptz default now()
+);
+
+create table if not exists mood_logs (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) not null,
+  mood_label text,
+  mood_score integer,
+  stress_score integer,
+  note text,
+  created_at timestamptz default now()
+);
+
 -- Create minimal policies: by default enable RLS off; instruct user to enable RLS per table.

@@ -2,6 +2,7 @@ import Sidebar from '../components/Sidebar'
 import Navbar from '../components/Navbar'
 import Card from '../components/Card'
 import DailyFocusCard from '../components/DailyFocusCard'
+import AICopilotTester from '../components/AICopilotTester'
 import ChartComponent from '../components/Chart'
 import { useDashboard } from '../hooks/useDashboard'
 
@@ -38,7 +39,7 @@ export default function DashboardPage() {
                       <span className="text-sm text-gray-400">Total Balance</span>
                       <div className="flex items-baseline gap-3">
                         <span className="text-3xl font-bold text-electric font-mono tracking-tight">
-                          $ {data?.balance?.toLocaleString() ?? '14,200'}
+                          $ {data?.balance?.toLocaleString() ?? '0'}
                         </span>
                         <div className="text-xs text-teal flex items-center gap-1">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
@@ -48,8 +49,8 @@ export default function DashboardPage() {
                     </div>
                     <div className="mt-4 h-24">
                       <ChartComponent 
-                        data={[12400, 12800, 13100, 12900, 13500, 13800, 14200]} 
-                        labels={['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']} 
+                        data={data?.balanceHistory?.length ? data.balanceHistory : [0]} 
+                        labels={data?.balanceLabels?.length ? data.balanceLabels : ['–']} 
                         color="#00E5FF" 
                         height={100}
                       />
@@ -65,7 +66,10 @@ export default function DashboardPage() {
                 </div>
               </Card>
               
-              <DailyFocusCard />
+              <div className="space-y-4">
+                <DailyFocusCard />
+                <AICopilotTester />
+              </div>
             </div>
 
             {/* Gym Section */}
@@ -97,7 +101,7 @@ export default function DashboardPage() {
                       <div>
                         <span className="text-sm text-gray-400">Current Weight</span>
                         <div className="text-3xl font-bold text-white font-mono tracking-tight">
-                          181.0 <span className="text-lg text-gray-500">lbs</span>
+                          {data?.weightHistory?.length ? data.weightHistory[data.weightHistory.length - 1].toFixed(1) : '—'} <span className="text-lg text-gray-500">lbs</span>
                         </div>
                       </div>
                       <div className="text-xs text-teal flex items-center gap-1 mb-1">
@@ -106,8 +110,8 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex-1 min-h-[100px]">
                       <ChartComponent 
-                        data={[185, 184.2, 183.5, 182.8, 182.0, 181.5, 181.0]} 
-                        labels={['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']} 
+                        data={data?.weightHistory?.length ? data.weightHistory : [0]} 
+                        labels={data?.weightLabels?.length ? data.weightLabels : ['–']} 
                         color="#B300FF" 
                         height={100}
                       />

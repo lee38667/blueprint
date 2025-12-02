@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { useStore } from '../lib/store'
 import { useRouter } from 'next/router'
 
@@ -34,14 +35,16 @@ export default function Sidebar(){
   return (
     <aside className={`h-screen p-4 bg-black/40 backdrop-blur-md border-r border-white/5 ${collapsed ? 'w-20' : 'w-64'} transition-all duration-300 flex flex-col`}> 
       <div className={`mb-8 flex items-center ${collapsed ? 'justify-center' : 'px-2'}`}>
-        <div className="w-8 h-8 rounded bg-gradient-to-br from-electric to-neon flex items-center justify-center text-black font-bold text-lg shadow-[0_0_15px_rgba(0,229,255,0.3)]">
-          B
+        <div className="relative w-10 h-10 rounded-lg overflow-hidden shadow-[0_0_20px_rgba(0,229,255,0.35)] bg-black">
+          <Image src="/logo.png" alt="Blueprint logo" fill className="object-contain" priority />
         </div>
         {!collapsed && <span className="ml-3 text-xl font-display font-bold tracking-wider text-white">BLUEPRINT</span>}
       </div>
       
       <nav className="space-y-2 flex-1">
         <NavItem href="/dashboard" label="Dashboard" icon={Icons.Dashboard} collapsed={collapsed} />
+        <NavItem href="/motivation" label="Motivation" icon={Icons.Content} collapsed={collapsed} />
+        <NavItem href="/goals" label="Goals" icon={Icons.LifeAreas} collapsed={collapsed} />
         <NavItem href="/notes" label="Notes" icon={Icons.Notes} collapsed={collapsed} />
         <NavItem href="/life-areas" label="Life Areas" icon={Icons.LifeAreas} collapsed={collapsed} />
         <NavItem href="/gym" label="Gym" icon={Icons.Gym} collapsed={collapsed} />
