@@ -22,8 +22,24 @@ export default function MyApp({ Component, pageProps }: AppProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="h-full"
+            className="h-full relative"
           >
+            {/* Ambient LifeAt-inspired backdrop */}
+            <div aria-hidden className="overlay-blur" />
+            <div aria-hidden className="pointer-events-none absolute inset-0">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.35 }}
+                transition={{ duration: 0.8 }}
+                className="absolute -top-32 -left-16 w-96 h-96 rounded-full blur-3xl accent-gradient"
+              />
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.25 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                className="absolute -top-24 right-10 w-[28rem] h-[28rem] rounded-full blur-3xl accent-gradient"
+              />
+            </div>
             <Component {...pageProps} />
           </motion.div>
         </AnimatePresence>

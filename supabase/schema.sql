@@ -59,6 +59,14 @@ create table if not exists finance_history (
   note text
 );
 
+-- Favorites for scripture verses
+create table if not exists scripture_favorites (
+  id uuid primary key default uuid_generate_v4(),
+  verse text not null,
+  reference text not null,
+  created_at timestamp with time zone default now()
+);
+
 create table if not exists skills (
   id uuid default gen_random_uuid() primary key,
   user_id uuid references auth.users(id) not null,
@@ -115,6 +123,19 @@ create table if not exists mood_logs (
   stress_score integer,
   note text,
   created_at timestamptz default now()
+);
+
+create table if not exists tasks (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) not null,
+  title text not null,
+  description text,
+  priority text default 'normal', -- low | normal | high
+  status text default 'todo', -- todo | in_progress | done
+  project text,
+  due_date date,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
 );
 
 -- Create minimal policies: by default enable RLS off; instruct user to enable RLS per table.

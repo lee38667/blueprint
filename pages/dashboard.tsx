@@ -4,24 +4,29 @@ import Card from '../components/Card'
 import DailyFocusCard from '../components/DailyFocusCard'
 import AICopilotTester from '../components/AICopilotTester'
 import ChartComponent from '../components/Chart'
+import ScriptureCard from '../components/ScriptureCard'
+import MotivationQuoteCard from '../components/MotivationQuoteCard'
 import { useDashboard } from '../hooks/useDashboard'
+import { useTasks } from '../hooks/useTasks'
 
 export default function DashboardPage() {
   const { data, loading } = useDashboard()
+  const { tasks, addTask, updateTask } = useTasks()
+  const quickTasks = tasks.filter(t => t.status !== 'done').slice(0, 5)
 
   return (
-    <div className="min-h-screen flex bg-black text-white font-sans selection:bg-electric selection:text-black">
+    <div className="min-h-screen flex text-white font-sans selection:bg-electric selection:text-black app-shell">
       <Sidebar />
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         <Navbar />
-        <main className="flex-1 overflow-y-auto p-8">
+        <main className="flex-1 overflow-y-auto px-4 md:px-8 pb-8">
           <div className="max-w-7xl mx-auto space-y-8">
             
             {/* Header Section */}
             <div className="flex items-end justify-between mb-8">
               <div>
-                <h1 className="text-3xl font-display font-bold text-white mb-2">Dashboard</h1>
-                <p className="text-minimal-gray">Overview of your systems and progress.</p>
+                <h1 className="heading-xl mb-2">Dashboard</h1>
+                <p className="subtle-muted">Brief overview of key modules.</p>
               </div>
               <div className="text-right text-sm text-gray-500 font-mono">
                 {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
@@ -29,7 +34,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Top Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="content-grid">
               <Card title="Financial Snapshot" className="h-full">
                 {loading ? (
                   <div className="card-skeleton h-24 w-full animate-pulse" />
@@ -59,15 +64,36 @@ export default function DashboardPage() {
                 )}
               </Card>
               
-              <Card title="Daily Scripture" className="h-full border-neon/20">
-                <div className="h-full flex flex-col justify-center">
-                  <p className="text-lg italic text-white/90 font-serif leading-relaxed">"Be still, and know that I am God."</p>
-                  <p className="text-sm text-neon mt-3 font-medium">— Psalm 46:10</p>
+              {/* Minimal placeholder ready for dynamic content */}
+              <Card title="Quick Tasks" className="h-full">
+                <div className="space-y-3">
+                  {quickTasks.length === 0 ? (
+                    <div className="subtle-muted">No open tasks. Add some on Tasks.</div>
+                  ) : (
+                    quickTasks.map(t => (
+                      <div key={t.id} className="flex items-center justify-between p-2 rounded-xl border border-white/10 bg-white/5">
+                        <div>
+                          <div className="font-medium">{t.title}</div>
+                          <div className="text-xs text-neutral-500">
+                            {t.project || 'General'} • {t.priority}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {t.status !== 'in_progress' && (
+                            <button className="btn-glow px-3 py-1 rounded" onClick={() => updateTask(t.id, { status: 'in_progress' })}>Start</button>
+                          )}
+                          <button className="px-3 py-1 rounded border border-white/10" onClick={() => updateTask(t.id, { status: 'done' })}>Done</button>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </Card>
               
               <div className="space-y-4">
                 <DailyFocusCard />
+                <MotivationQuoteCard />
+                <ScriptureCard />
                 <AICopilotTester />
               </div>
             </div>
@@ -79,20 +105,9 @@ export default function DashboardPage() {
                 <div className="h-px flex-1 bg-white/10"></div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card title="This Week" className="min-h-[200px]">
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center p-2 bg-white/5 rounded">
-                      <span>Monday: Push</span>
-                      <span className="text-teal text-xs px-2 py-1 bg-teal/10 rounded">Completed</span>
-                    </div>
-                    <div className="flex justify-between items-center p-2 bg-white/5 rounded">
-                      <span>Tuesday: Pull</span>
-                      <span className="text-teal text-xs px-2 py-1 bg-teal/10 rounded">Completed</span>
-                    </div>
-                    <div className="flex justify-between items-center p-2 bg-white/5 rounded border border-electric/30">
-                      <span>Wednesday: Legs</span>
-                      <span className="text-electric text-xs px-2 py-1 bg-electric/10 rounded">Today</span>
-                    </div>
+                <Card title="" className="min-h[200px]">
+                  <div className="h-full flex items-center justify-center subtle-muted">
+                    <span>No schedule connected.</span>
                   </div>
                 </Card>
                 <Card title="Body Stats" className="min-h-[200px]">

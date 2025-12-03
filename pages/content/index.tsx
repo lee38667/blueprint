@@ -12,7 +12,7 @@ export default function ContentPage(){
       <div className="flex-1">
         <Navbar />
         <main className="p-6">
-          <h1 className="text-2xl mb-4">Content Library</h1>
+          <h1 className="text-2xl mb-4">Content</h1>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {loading ? <Card><div className="card-skeleton h-24"/></Card> : items.map((it:any)=> <Card key={it.id} title={it.title}>{it.type}</Card>)}
           </div>

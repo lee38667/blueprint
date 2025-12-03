@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../lib/store'
 import { useRouter } from 'next/router'
 
@@ -8,11 +9,23 @@ const NavItem = ({ href, label, icon, collapsed }: { href: string; label: string
   const isActive = router.pathname.startsWith(href)
   
   return (
-    <Link href={href} className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-200 group ${isActive ? 'bg-electric/10 text-electric' : 'text-minimal-gray hover:bg-white/5 hover:text-white'}`}>
-      <div className={`${isActive ? 'text-electric drop-shadow-[0_0_5px_rgba(0,229,255,0.5)]' : 'text-gray-400 group-hover:text-white'}`}>
+    <Link href={href} className={`panel-glass hover-lift flex items-center gap-3 p-3 rounded-xl transition-all duration-300 group ${isActive ? 'ring-2 ring-white/20 bg-white/5' : 'bg-white/0'}`}>
+      <div className={`${isActive ? 'text-electric' : 'text-neutral-400 group-hover:text-white'}`}>
         {icon}
       </div>
-      {!collapsed && <span className="font-medium tracking-wide text-sm">{label}</span>}
+      <AnimatePresence initial={false}>
+        {!collapsed && (
+          <motion.span
+            initial={{ opacity: 0, x: -6 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -6 }}
+            transition={{ duration: 0.2 }}
+            className="font-medium tracking-wide text-sm text-neutral-200"
+          >
+            {label}
+          </motion.span>
+        )}
+      </AnimatePresence>
     </Link>
   )
 }
@@ -33,17 +46,30 @@ export default function Sidebar(){
   const collapsed = useStore(s=> s.sidebarCollapsed)
 
   return (
-    <aside className={`h-screen p-4 bg-black/40 backdrop-blur-md border-r border-white/5 ${collapsed ? 'w-20' : 'w-64'} transition-all duration-300 flex flex-col`}> 
+    <aside className={`h-screen p-4 border-r border-white/5 ${collapsed ? 'w-20' : 'w-72'} transition-all duration-300 flex flex-col`}> 
       <div className={`mb-8 flex items-center ${collapsed ? 'justify-center' : 'px-2'}`}>
-        <div className="relative w-10 h-10 rounded-lg overflow-hidden shadow-[0_0_20px_rgba(0,229,255,0.35)] bg-black">
+        <div className="relative w-10 h-10 rounded-2xl overflow-hidden bg-neutral-900 border border-white/10">
           <Image src="/logo.png" alt="Blueprint logo" fill className="object-contain" priority />
         </div>
-        {!collapsed && <span className="ml-3 text-xl font-display font-bold tracking-wider text-white">BLUEPRINT</span>}
+        <AnimatePresence initial={false}>
+          {!collapsed && (
+            <motion.span
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -8 }}
+              transition={{ duration: 0.25 }}
+              className="ml-3 text-lg font-display tracking-wide text-white"
+            >
+              Blueprint
+            </motion.span>
+          )}
+        </AnimatePresence>
       </div>
       
       <nav className="space-y-2 flex-1">
         <NavItem href="/dashboard" label="Dashboard" icon={Icons.Dashboard} collapsed={collapsed} />
         <NavItem href="/motivation" label="Motivation" icon={Icons.Content} collapsed={collapsed} />
+        <NavItem href="/tasks" label="Tasks" icon={Icons.Content} collapsed={collapsed} />
         <NavItem href="/goals" label="Goals" icon={Icons.LifeAreas} collapsed={collapsed} />
         <NavItem href="/notes" label="Notes" icon={Icons.Notes} collapsed={collapsed} />
         <NavItem href="/life-areas" label="Life Areas" icon={Icons.LifeAreas} collapsed={collapsed} />
@@ -51,6 +77,7 @@ export default function Sidebar(){
         <NavItem href="/finance" label="Finance" icon={Icons.Finance} collapsed={collapsed} />
         <NavItem href="/skills" label="Skills" icon={Icons.Skills} collapsed={collapsed} />
         <NavItem href="/content" label="Content" icon={Icons.Content} collapsed={collapsed} />
+        {/* Demo route removed during cleanup */}
       </nav>
 
       <div className="pt-4 border-t border-white/5">
