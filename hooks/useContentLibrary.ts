@@ -1,23 +1,36 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { useDataStore } from '../lib/dataStore'
+import type { DocumentItem } from '../types/models'
+
+interface DocumentPayload {
+  title: string
+  type: string
+  metadata: Record<string, any>
+}
 
 export function useContentLibrary(){
-  const [loading, setLoading] = useState(true)
-  const [items, setItems] = useState<any[]>([])
+  const loading = useDataStore(s => s.documentsLoading)
+  const loaded = useDataStore(s => s.documentsLoaded)
+  const items = useDataStore(s => s.documents)
+  const fetchDocuments = useDataStore(s => s.fetchDocuments)
 
   useEffect(()=>{
-    let mounted = true
-    const load = async ()=>{
-      setLoading(true)
-      const { data } = await supabase.from('content').select('*').order('created_at', { ascending: false })
-      if (mounted) setItems(data ?? [])
-      setLoading(false)
-    }
-    load()
-    return ()=>{ mounted = false }
-  },[])
+    if (!loaded) fetchDocuments()
+  },[loaded, fetchDocuments])
 
-  return { loading, items }
+  const addRecord = useCallback(async (payload: DocumentPayload) => {
+    await supabase.from('content').insert(payload)
+    await fetchDocuments()
+  }, [fetchDocuments])
+
+  const updateMetadata = useCallback(async (item: DocumentItem, metadataPatch: Record<string, any>) => {
+    const merged = { ...(item.metadata ?? {}), ...metadataPatch }
+    await supabase.from('content').update({ metadata: merged }).eq('id', item.id)
+    await fetchDocuments()
+  }, [fetchDocuments])
+
+  return { loading, items, addRecord, updateMetadata }
 }
 
 export default useContentLibrary

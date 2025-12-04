@@ -1,7 +1,6 @@
 import { useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useDataStore } from '../lib/dataStore'
-import type { MoodLog } from '../types/models'
 
 export function useMoodLogs() {
   const logs = useDataStore(s => s.moodLogs)

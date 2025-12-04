@@ -3,11 +3,14 @@ import Navbar from '../../components/Navbar'
 import Card from '../../components/Card'
 import Button from '../../components/Button'
 import { useFinance } from '../../hooks/useFinance'
+import useFinanceAdvisor from '../../hooks/useFinanceAdvisor'
+import ChartComponent from '../../components/Chart'
 import { useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 
 export default function FinancePage(){
   const { summary, loading, history, logs, targets, addLog, addTarget } = useFinance()
+  const { projections, categoryTrends, advice, loading: coachLoading, error: coachError } = useFinanceAdvisor(summary, history, logs)
   const [balance, setBalance] = useState('')
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
@@ -151,6 +154,80 @@ export default function FinancePage(){
                 )}
               </Card>
             </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+            <Card title="3-Month Projection">
+              {projections.length === 0 ? (
+                <div className="text-sm subtle-muted">Add at least two balance entries to visualize momentum.</div>
+              ) : (
+                <ChartComponent data={projections.map(p => p.value)} labels={projections.map(p => p.label)} color="#7C5CFF" height={200} />
+              )}
+              {summary?.balance != null && (
+                <p className="text-xs text-neutral-400 mt-3">Current balance ${Number(summary.balance).toLocaleString()}</p>
+              )}
+            </Card>
+            <Card title="Category Trends">
+              {categoryTrends.length === 0 ? (
+                <div className="text-sm subtle-muted">Log income and expenses to surface category insights.</div>
+              ) : (
+                <div className="space-y-3 text-sm">
+                  {categoryTrends.map((trend) => {
+                    const total = trend.income + trend.expense
+                    const safeTotal = total === 0 ? 1 : total
+                    return (
+                      <div key={trend.category}>
+                        <div className="flex justify-between text-neutral-300 text-xs mb-1">
+                          <span>{trend.category}</span>
+                          <span>${total.toFixed(0)}</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-white/5">
+                          <div className="h-full rounded-l-full bg-teal" style={{ width: `${Math.round((trend.income / safeTotal) * 100)}%` }} />
+                        </div>
+                        <div className="h-2 rounded-full bg-white/5 mt-1">
+                          <div className="h-full rounded-l-full bg-red-400" style={{ width: `${Math.round((trend.expense / safeTotal) * 100)}%` }} />
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </Card>
+            <Card title="AI Finance Coach">
+              {coachLoading ? (
+                <div className="card-skeleton h-24" />
+              ) : advice ? (
+                <div className="space-y-3 text-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="text-3xl font-display text-white">{Math.round(advice.cashflowScore)}</div>
+                    <div className="text-xs uppercase text-neutral-500">Cashflow score</div>
+                  </div>
+                  <p className="text-neutral-200">{advice.outlook}</p>
+                  {advice.guardrails.length > 0 && (
+                    <div>
+                      <p className="text-xs uppercase text-red-300 mb-1">Guardrails</p>
+                      <ul className="list-disc pl-5 space-y-1 text-red-200">
+                        {advice.guardrails.map((item, idx) => (
+                          <li key={idx}>{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {advice.opportunities.length > 0 && (
+                    <div>
+                      <p className="text-xs uppercase text-teal mb-1">Opportunities</p>
+                      <ul className="list-disc pl-5 space-y-1 text-neutral-100">
+                        {advice.opportunities.map((item, idx) => (
+                          <li key={idx}>{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-sm subtle-muted">Add a few balance entries or logs to unlock coaching.</div>
+              )}
+              {coachError && <div className="text-xs text-red-400 mt-2">{coachError}</div>}
+            </Card>
           </div>
         </main>
       </div>

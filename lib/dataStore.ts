@@ -11,8 +11,13 @@ import type {
   SavingsTarget,
   MoodLog,
   BodyStat,
-  NoteEntry
+  NoteEntry,
+  DocumentItem
 } from '../types/models'
+
+// Centralized cache for Supabase-backed modules.
+// To onboard a new table/module, add its slice here so every hook/component
+// can share the same fetch results and avoid duplicate queries.
 
 interface DataStore {
   tasks: Task[]
@@ -49,6 +54,11 @@ interface DataStore {
   notesLoading: boolean
   notesLoaded: boolean
   fetchNotes: () => Promise<void>
+
+  documents: DocumentItem[]
+  documentsLoading: boolean
+  documentsLoaded: boolean
+  fetchDocuments: () => Promise<void>
 }
 
 export const useDataStore = create<DataStore>((set, get) => ({
@@ -146,5 +156,18 @@ export const useDataStore = create<DataStore>((set, get) => ({
     set({ notesLoading: true })
     const { data } = await supabase.from('notes').select('*').order('updated_at', { ascending: false })
     set({ notes: (data ?? []) as NoteEntry[], notesLoading: false, notesLoaded: true })
+  },
+
+  documents: [],
+  documentsLoading: false,
+  documentsLoaded: false,
+  fetchDocuments: async () => {
+    if (get().documentsLoading) return
+    set({ documentsLoading: true })
+    const { data } = await supabase
+      .from('content')
+      .select('id,title,type,metadata,created_at')
+      .order('created_at', { ascending: false })
+    set({ documents: (data ?? []) as DocumentItem[], documentsLoading: false, documentsLoaded: true })
   }
 }))

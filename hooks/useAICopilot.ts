@@ -1,23 +1,19 @@
 import { useState, useCallback } from 'react'
-import { AISnapshot } from '../lib/aiSnapshot'
+import { AISnapshot, BrainInsight, hashSnapshot } from '../lib/aiSnapshot'
+import { useAIStore } from '../lib/aiStore'
 
 type Mode = 'mood' | 'focus'
-
-export interface BrainInsight {
-  summary: string
-  taskSuggestions: string[]
-  goalHighlights: string[]
-  wellnessNote?: string
-  riskAlerts?: string[]
-}
 
 export function useAICopilot() {
   const [insights, setInsights] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [brainInsights, setBrainInsights] = useState<BrainInsight | null>(null)
-  const [brainLoading, setBrainLoading] = useState(false)
-  const [brainError, setBrainError] = useState<string | null>(null)
+  const brainInsights = useAIStore(state => state.insight)
+  const brainLoading = useAIStore(state => state.loading)
+  const brainError = useAIStore(state => state.error)
+  const setBrainLoadingState = useAIStore(state => state.setLoading)
+  const setBrainResult = useAIStore(state => state.setResult)
+  const setBrainErrorState = useAIStore(state => state.setError)
 
   async function requestInsight(mood: string, mode: Mode = 'mood') {
     if (!mood && mode === 'mood') return
@@ -54,9 +50,12 @@ export function useAICopilot() {
     return requestInsight(mood, 'focus')
   }
 
-  const analyzeSnapshot = useCallback(async (snapshot: AISnapshot) => {
-    setBrainLoading(true)
-    setBrainError(null)
+  const analyzeSnapshot = useCallback(async (snapshot: AISnapshot, options?: { force?: boolean }) => {
+    const snapshotHash = hashSnapshot(snapshot)
+    const { currentHash, insight } = useAIStore.getState()
+    if (!options?.force && currentHash === snapshotHash && insight) return
+
+    setBrainLoadingState(snapshotHash)
     try {
       const res = await fetch('/api/ai-copilot', {
         method: 'POST',
@@ -70,14 +69,14 @@ export function useAICopilot() {
       }
 
       const data = (await res.json()) as { brain?: BrainInsight }
-      setBrainInsights(data.brain ?? null)
+      if (!data.brain) {
+        throw new Error('Brain insight missing from response')
+      }
+      setBrainResult(snapshotHash, data.brain)
     } catch (e: any) {
-      setBrainError(e.message || 'Unexpected error')
-      setBrainInsights(null)
-    } finally {
-      setBrainLoading(false)
+      setBrainErrorState(e.message || 'Unexpected error')
     }
-  }, [])
+  }, [setBrainLoadingState, setBrainResult, setBrainErrorState])
 
   return {
     insights,

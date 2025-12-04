@@ -1,18 +1,46 @@
 import Card from './Card'
 import useAIBrain from '../hooks/useAIBrain'
 
-export default function AICopilotInsightsCard(){
-  const { insights, loading, error, refresh } = useAIBrain({ auto: true })
+type SectionKey = 'summary' | 'tasks' | 'goals' | 'wellness' | 'risk'
+
+interface Props {
+  title?: string
+  sections?: SectionKey[]
+  auto?: boolean
+}
+
+export default function AICopilotInsightsCard({
+  title = 'AI Copilot Intelligence',
+  sections,
+  auto = true
+}: Props){
+  const activeSections = sections ?? ['summary', 'tasks', 'goals', 'wellness', 'risk']
+  const showSummary = activeSections.includes('summary')
+  const showTasks = activeSections.includes('tasks')
+  const showGoals = activeSections.includes('goals')
+  const showWellness = activeSections.includes('wellness')
+  const showRisk = activeSections.includes('risk')
+
+  const { insights, loading, error, refresh } = useAIBrain({ auto })
+
+  const summaryText = loading
+    ? "Synthesizing today's briefing..."
+    : insights?.summary || (!error ? 'Need more data to generate insights—log a task, goal, or mood.' : '')
 
   return (
-    <Card title="AI Copilot Intelligence">
+    <Card title={title}>
       <div className="flex items-center justify-between gap-4 mb-4 text-sm text-neutral-300">
-        <p className="flex-1 text-neutral-100">
-          {loading && 'Synthesizing today\'s briefing...'}
-          {!loading && insights?.summary}
-          {!loading && !insights && !error && 'Need more data to generate insights—log a task, goal, or mood.'}
-          {error && <span className="text-red-400">{error}</span>}
-        </p>
+        {showSummary ? (
+          <p className="flex-1 text-neutral-100">
+            {summaryText}
+            {error && <span className="text-red-400">{error}</span>}
+          </p>
+        ) : (
+          <p className="flex-1 text-neutral-500 text-xs">
+            AI brain ready
+            {error && <span className="text-red-400 ml-2">{error}</span>}
+          </p>
+        )}
         <button
           onClick={refresh}
           disabled={loading}
@@ -32,7 +60,7 @@ export default function AICopilotInsightsCard(){
 
       {!loading && insights && (
         <div className="space-y-4 text-sm text-neutral-200">
-          {insights.taskSuggestions?.length > 0 && (
+          {showTasks && insights.taskSuggestions?.length > 0 && (
             <section>
               <p className="uppercase text-xs tracking-wide text-neutral-400 mb-1">Task Focus</p>
               <ul className="space-y-2">
@@ -46,7 +74,7 @@ export default function AICopilotInsightsCard(){
             </section>
           )}
 
-          {insights.goalHighlights?.length > 0 && (
+          {showGoals && insights.goalHighlights?.length > 0 && (
             <section>
               <p className="uppercase text-xs tracking-wide text-neutral-400 mb-1">Goal Trajectory</p>
               <ul className="space-y-2">
@@ -60,14 +88,14 @@ export default function AICopilotInsightsCard(){
             </section>
           )}
 
-          {insights.wellnessNote && (
+          {showWellness && insights.wellnessNote && (
             <section>
               <p className="uppercase text-xs tracking-wide text-neutral-400 mb-1">Wellness</p>
               <p className="text-neutral-100 bg-white/5 rounded-lg p-3">{insights.wellnessNote}</p>
             </section>
           )}
 
-          {insights.riskAlerts && insights.riskAlerts.length > 0 && (
+          {showRisk && insights.riskAlerts && insights.riskAlerts.length > 0 && (
             <section>
               <p className="uppercase text-xs tracking-wide text-amber-300 mb-1">Watch Outs</p>
               <ul className="space-y-2">

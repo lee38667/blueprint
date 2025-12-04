@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Sidebar from '../components/Sidebar'
 import Navbar from '../components/Navbar'
 import Card from '../components/Card'
@@ -11,17 +11,27 @@ import AICopilotInsightsCard from '../components/AICopilotInsightsCard'
 import { useDashboard } from '../hooks/useDashboard'
 import { useTasks } from '../hooks/useTasks'
 import { useBodyStats } from '../hooks/useBodyStats'
+import useBodyStatsCoach from '../hooks/useBodyStatsCoach'
 
 export default function DashboardPage() {
   const { data, loading } = useDashboard()
   const { tasks, addTask, updateTask } = useTasks()
   const quickTasks = tasks.filter(t => t.status !== 'done').slice(0, 5)
   const { stats, addStat } = useBodyStats()
+  const { data: coachTips, loading: coachLoading, error: coachError } = useBodyStatsCoach(stats)
   const [weight, setWeight] = useState('')
   const [sleep, setSleep] = useState('')
   const [water, setWater] = useState('')
   const [stress, setStress] = useState('')
   const recentStats = [...stats].slice(-5).reverse()
+  const weekWindow = useMemo(() => [...stats].slice(-7), [stats])
+  const formatLabel = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const weightPoints = weekWindow.filter(s => typeof s.weight === 'number')
+  const weightSeries = weightPoints.length ? weightPoints.map(s => s.weight as number) : [0]
+  const weightLabels = weightPoints.length ? weightPoints.map(s => formatLabel(s.recorded_at)) : ['No data']
+  const sleepPoints = weekWindow.filter(s => typeof s.sleep_hours === 'number')
+  const sleepSeries = sleepPoints.length ? sleepPoints.map(s => s.sleep_hours as number) : [0]
+  const sleepLabels = sleepPoints.length ? sleepPoints.map(s => formatLabel(s.recorded_at)) : ['No data']
 
   const handleBodySubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -121,7 +131,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Body Stats Quick Log */}
-            <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <Card title="Body Stats Quick Log">
                 <form onSubmit={handleBodySubmit} className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <input value={weight} onChange={e=>setWeight(e.target.value)} placeholder="Weight" className="rounded bg-black/40 border border-white/10 px-3 py-2 text-sm" />
@@ -131,21 +141,56 @@ export default function DashboardPage() {
                   <button className="btn-glow px-4 py-2 rounded text-xs md:col-span-4">Log Stats</button>
                 </form>
               </Card>
-              <Card title="Recent Body Metrics">
-                <div className="space-y-2">
-                  {recentStats.length === 0 ? (
-                    <div className="subtle-muted">No entries yet.</div>
-                  ) : recentStats.map(stat => (
-                    <div key={stat.id} className="flex items-center justify-between p-2 rounded border border-white/10 bg-white/5 text-sm">
-                      <div>
-                        <div className="font-medium">{new Date(stat.recorded_at).toLocaleDateString()}</div>
-                        <div className="text-xs text-neutral-500">Weight {stat.weight ?? '—'} • Sleep {stat.sleep_hours ?? '—'} • Water {stat.water_ml ?? '—'} ml • Stress {stat.stress ?? '—'}</div>
-                      </div>
-                    </div>
-                  ))}
+              <Card title="Weekly Trends">
+                <div className="space-y-5">
+                  <div>
+                    <p className="text-xs uppercase text-neutral-500 mb-2">Weight</p>
+                    <ChartComponent data={weightSeries} labels={weightLabels} color="#FF9D00" height={120} />
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase text-neutral-500 mb-2">Sleep Hours</p>
+                    <ChartComponent data={sleepSeries} labels={sleepLabels} color="#7C5CFF" height={120} />
+                  </div>
                 </div>
               </Card>
+              <Card title="Body Coach">
+                {coachLoading ? (
+                  <div className="space-y-2">
+                    {[0,1,2].map(i => <div key={i} className="h-3 w-full rounded bg-white/10 animate-pulse" />)}
+                  </div>
+                ) : coachError ? (
+                  <p className="text-sm text-red-300">{coachError}</p>
+                ) : coachTips ? (
+                  <div className="space-y-3">
+                    <p className="text-sm text-neutral-200 font-medium">{coachTips.headline}</p>
+                    <ul className="text-sm text-neutral-300 space-y-2">
+                      {coachTips.insights.map((tip, idx) => (
+                        <li key={idx} className="flex gap-2">
+                          <span className="text-electric">•</span>
+                          <span>{tip}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : (
+                  <p className="text-sm text-neutral-400">Log a few days of stats to unlock personalized guidance.</p>
+                )}
+              </Card>
             </section>
+            <Card title="Recent Body Metrics">
+              <div className="space-y-2">
+                {recentStats.length === 0 ? (
+                  <div className="subtle-muted">No entries yet.</div>
+                ) : recentStats.map(stat => (
+                  <div key={stat.id} className="flex items-center justify-between p-2 rounded border border-white/10 bg-white/5 text-sm">
+                    <div>
+                      <div className="font-medium">{new Date(stat.recorded_at).toLocaleDateString()}</div>
+                      <div className="text-xs text-neutral-500">Weight {stat.weight ?? '—'} • Sleep {stat.sleep_hours ?? '—'} • Water {stat.water_ml ?? '—'} ml • Stress {stat.stress ?? '—'}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
 
             {/* Gym Section */}
             <section>

@@ -90,6 +90,59 @@ export interface NoteEntry {
   content?: string | null
   heading?: string | null
   body?: string | null
+  tags?: string[] | null
+  attachments?: Record<string, any> | null
   created_at?: string | null
   updated_at?: string | null
+}
+
+export interface DocumentItem {
+  id: string
+  title: string | null
+  type: string | null
+  metadata: Record<string, any> | null
+  created_at: string
+}
+
+export interface MoodCoachInsight {
+  encouragement: string
+  burnoutRisk: 'low' | 'medium' | 'high'
+  actions: string[]
+  regulationTips: string[]
+}
+
+export interface ProductivityAnalytics {
+  completionRate: number
+  overdueCount: number
+  activeCount: number
+  weeklyLabels: string[]
+  weeklyVelocity: number[]
+  priorityTotals: Record<'low' | 'normal' | 'high', number>
+  focusProjects: { name: string; count: number }[]
+}
+
+export interface GoalCoachInsight {
+  goalId: string
+  momentumScore: number
+  summary: string
+  risks: string[]
+  nextSteps: string[]
+}
+
+export interface FinanceProjectionPoint {
+  label: string
+  value: number
+}
+
+export interface FinanceCategoryTrend {
+  category: string
+  income: number
+  expense: number
+}
+
+export interface FinanceCoachAdvice {
+  outlook: string
+  guardrails: string[]
+  opportunities: string[]
+  cashflowScore: number
 }

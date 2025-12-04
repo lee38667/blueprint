@@ -32,6 +32,24 @@ export interface AISnapshot {
   notes?: Array<{ title?: string | null; content?: string | null }>
 }
 
+export interface BrainInsight {
+  summary: string
+  taskSuggestions: string[]
+  goalHighlights: string[]
+  wellnessNote?: string
+  riskAlerts?: string[]
+}
+
+export function hashSnapshot(snapshot: AISnapshot): string {
+  const raw = JSON.stringify(snapshot)
+  let hash = 0
+  for (let i = 0; i < raw.length; i++) {
+    hash = (hash << 5) - hash + raw.charCodeAt(i)
+    hash |= 0
+  }
+  return hash.toString()
+}
+
 export function formatSnapshotForAI(snapshot: AISnapshot): string {
   const taskText = snapshot.tasks.length
     ? snapshot.tasks

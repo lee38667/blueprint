@@ -2,7 +2,9 @@ import Sidebar from '../../components/Sidebar'
 import Navbar from '../../components/Navbar'
 import Card from '../../components/Card'
 import Button from '../../components/Button'
+import AICopilotInsightsCard from '../../components/AICopilotInsightsCard'
 import { useGoals } from '../../hooks/useGoals'
+import useGoalCoach from '../../hooks/useGoalCoach'
 import { useState } from 'react'
 
 export default function GoalsPage(){
@@ -15,6 +17,8 @@ export default function GoalsPage(){
   const [selectedGoal, setSelectedGoal] = useState<string>('')
   const [stTitle, setStTitle] = useState('')
   const [selectedMilestone, setSelectedMilestone] = useState<string>('')
+  const [coachGoal, setCoachGoal] = useState<string>('')
+  const { data: goalInsight, loading: coachLoading, error: coachError, evaluate } = useGoalCoach()
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -99,6 +103,70 @@ export default function GoalsPage(){
                 <input value={stTitle} onChange={e=>setStTitle(e.target.value)} className="w-full rounded bg-black/40 border border-white/10 px-3 py-2 text-sm" />
               </div>
               <Button variant="primary" className="text-xs w-full md:w-auto" onClick={async()=>{ if(!selectedMilestone||!stTitle) return; await addSubtask(selectedMilestone, { title: stTitle }); setStTitle('') }}>Add Subtask</Button>
+            </div>
+          </Card>
+
+          <AICopilotInsightsCard title="Goal Intelligence" sections={['summary', 'goals', 'wellness', 'risk']} />
+          <Card title="AI Goal Coach">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+              <div className="md:col-span-2">
+                <label className="block text-xs text-gray-400 mb-1">Select goal</label>
+                <select value={coachGoal} onChange={e=>setCoachGoal(e.target.value)} className="w-full rounded bg-black/40 border border-white/10 px-3 py-2 text-sm">
+                  <option value="">Choose goal</option>
+                  {goals.map(goal => <option key={goal.id} value={goal.id}>{goal.title}</option>)}
+                </select>
+              </div>
+              <Button
+                variant="primary"
+                className={`text-xs w-full md:w-auto ${(!coachGoal || coachLoading) ? 'opacity-60 cursor-not-allowed' : ''}`}
+                onClick={async () => {
+                  if (!coachGoal || coachLoading) return
+                  const goal = goals.find(g => g.id === coachGoal) ?? null
+                  const goalMilestones = milestones.filter(m => m.goal_id === coachGoal)
+                  const goalSubtasks = subtasks.filter(s => goalMilestones.some(m => m.id === s.milestone_id))
+                  await evaluate(goal, goalMilestones, goalSubtasks)
+                }}
+              >
+                {coachLoading ? 'Analyzing…' : 'Evaluate Progress'}
+              </Button>
+            </div>
+            <div className="mt-4 space-y-3">
+              {!coachGoal ? (
+                <p className="text-sm subtle-muted">Pick a goal to receive tailored feedback.</p>
+              ) : coachLoading ? (
+                <div className="card-skeleton h-16" />
+              ) : goalInsight ? (
+                <div className="space-y-3 text-sm text-neutral-200">
+                  <div className="flex items-center gap-3">
+                    <div className="text-3xl font-display text-white">{goalInsight.momentumScore}</div>
+                    <div className="text-xs uppercase tracking-wide text-neutral-500">Momentum score</div>
+                  </div>
+                  <p>{goalInsight.summary}</p>
+                  {goalInsight.risks.length > 0 && (
+                    <div>
+                      <p className="text-xs uppercase text-red-300 mb-1">Risks</p>
+                      <ul className="list-disc pl-5 space-y-1 text-red-200">
+                        {goalInsight.risks.map((risk, idx) => (
+                          <li key={idx}>{risk}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {goalInsight.nextSteps.length > 0 && (
+                    <div>
+                      <p className="text-xs uppercase text-electric mb-1">Next steps</p>
+                      <ul className="list-disc pl-5 space-y-1 text-neutral-100">
+                        {goalInsight.nextSteps.map((step, idx) => (
+                          <li key={idx}>{step}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm subtle-muted">No insight yet. Run an evaluation when ready.</p>
+              )}
+              {coachError && <div className="text-xs text-red-400">{coachError}</div>}
             </div>
           </Card>
 

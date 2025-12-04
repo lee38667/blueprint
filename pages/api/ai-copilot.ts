@@ -1,14 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { createClient } from '@supabase/supabase-js'
-import { AISnapshot, formatSnapshotForAI } from '../../lib/aiSnapshot'
-
-type BrainInsight = {
-  summary: string
-  taskSuggestions: string[]
-  goalHighlights: string[]
-  wellnessNote?: string
-  riskAlerts?: string[]
-}
+import { AISnapshot, BrainInsight, formatSnapshotForAI } from '../../lib/aiSnapshot'
 
 type Data = {
   insight?: string

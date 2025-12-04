@@ -1,24 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
-
-export interface BodyStat { id: string; recorded_at: string; weight: number|null; sleep_hours: number|null; water_ml: number|null; stress: number|null }
+import { useDataStore } from '../lib/dataStore'
+import type { BodyStat } from '../types/models'
 
 export function useBodyStats(){
-  const [stats, setStats] = useState<BodyStat[]>([])
-  const [loading, setLoading] = useState(true)
+  const stats = useDataStore(s => s.bodyStats)
+  const loading = useDataStore(s => s.bodyLoading)
+  const loaded = useDataStore(s => s.bodyLoaded)
+  const fetchBodyStats = useDataStore(s => s.fetchBodyStats)
 
   useEffect(()=>{
-    let mounted = true
-    const load = async ()=>{
-      setLoading(true)
-      const { data } = await supabase.from('body_stats').select('id,recorded_at,weight,sleep_hours,water_ml,stress').order('recorded_at')
-      if (!mounted) return
-      setStats((data ?? []) as BodyStat[])
-      setLoading(false)
-    }
-    load()
-    return ()=>{ mounted = false }
-  },[])
+    if (!loaded) fetchBodyStats()
+  },[loaded, fetchBodyStats])
 
   const addStat = async (payload: Partial<BodyStat>) => {
     const { error } = await supabase.from('body_stats').insert({
@@ -28,6 +21,7 @@ export function useBodyStats(){
       stress: payload.stress ?? null
     })
     if (error) throw error
+    await fetchBodyStats()
   }
 
   return { stats, loading, addStat }

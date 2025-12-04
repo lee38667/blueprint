@@ -1,11 +1,16 @@
 import Sidebar from '../../components/Sidebar'
 import Navbar from '../../components/Navbar'
 import Card from '../../components/Card'
+import AICopilotInsightsCard from '../../components/AICopilotInsightsCard'
+import ChartComponent from '../../components/Chart'
 import { useTasks } from '../../hooks/useTasks'
+import useProductivityAnalytics from '../../hooks/useProductivityAnalytics'
 import { useMemo, useState } from 'react'
 
 export default function TasksPage(){
   const { tasks, loading, addTask, updateTask, removeTask } = useTasks()
+  const analytics = useProductivityAnalytics(tasks)
+  const priorityTotal = Math.max(1, analytics.priorityTotals.low + analytics.priorityTotals.normal + analytics.priorityTotals.high)
   const [title, setTitle] = useState('')
   const [status, setStatus] = useState<'all'|'todo'|'in_progress'|'done'>('all')
   const [priority, setPriority] = useState<'all'|'low'|'normal'|'high'>('all')
@@ -88,6 +93,62 @@ export default function TasksPage(){
               </div>
             </div>
           </Card>
+          <Card title="Productivity Pulse">
+            {tasks.length === 0 ? (
+              <div className="text-sm subtle-muted">Add tasks to unlock analytics.</div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-xs uppercase text-neutral-500 mb-1">Completion Rate</p>
+                    <div className="text-4xl font-display text-white">{analytics.completionRate}%</div>
+                    <p className="text-xs text-neutral-400">{analytics.activeCount} active • {analytics.overdueCount} overdue</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase text-neutral-500 mb-1">Priority mix</p>
+                    <div className="space-y-2 text-xs">
+                      {(['high','normal','low'] as const).map((priority) => (
+                        <div key={priority} className="space-y-1">
+                          <div className="flex justify-between text-neutral-400">
+                            <span className="capitalize">{priority}</span>
+                            <span>{analytics.priorityTotals[priority]}</span>
+                          </div>
+                          <div className="h-2 rounded-full bg-white/5">
+                            <div
+                              className={`h-full rounded-full ${priority === 'high' ? 'bg-red-400' : priority === 'normal' ? 'bg-electric' : 'bg-teal'}`}
+                              style={{ width: `${Math.round((analytics.priorityTotals[priority] / priorityTotal) * 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs uppercase text-neutral-500 mb-2">Weekly creation trend</p>
+                    <ChartComponent data={analytics.weeklyVelocity} labels={analytics.weeklyLabels} color="#0AEFFF" height={160} />
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase text-neutral-500 mb-2">Focus projects</p>
+                    {analytics.focusProjects.length === 0 ? (
+                      <div className="text-sm subtle-muted">No projects tagged yet.</div>
+                    ) : (
+                      <div className="space-y-2 text-sm">
+                        {analytics.focusProjects.map((project) => (
+                          <div key={project.name} className="flex items-center justify-between px-3 py-2 rounded border border-white/10 bg-white/5">
+                            <span>{project.name}</span>
+                            <span className="font-mono text-neutral-400">{project.count} tasks</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </Card>
+          <AICopilotInsightsCard title="Task Intelligence" sections={['summary', 'tasks', 'risk']} />
           {loading ? (
             <Card><div className="card-skeleton h-24"/></Card>
           ) : (

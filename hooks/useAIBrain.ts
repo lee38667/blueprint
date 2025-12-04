@@ -73,7 +73,7 @@ export function useAIBrain(options: Options = {}) {
     insights: brainInsights,
     loading: auto ? brainLoading || !ready : brainLoading,
     error: brainError,
-    refresh: () => analyzeSnapshot(snapshot)
+    refresh: () => analyzeSnapshot(snapshot, { force: true })
   }
 }
 
