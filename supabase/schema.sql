@@ -59,6 +59,66 @@ create table if not exists finance_history (
   note text
 );
 
+-- Income & Expense logs
+create table if not exists finance_logs (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) not null,
+  recorded_at timestamptz default now(),
+  type text check (type in ('income','expense')) not null,
+  amount numeric not null,
+  category text,
+  note text
+);
+
+-- Savings targets
+create table if not exists savings_targets (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) not null,
+  month date not null,
+  target_amount numeric not null,
+  created_at timestamptz default now()
+);
+
+-- Body stats tracker
+create table if not exists body_stats (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) not null,
+  recorded_at timestamptz default now(),
+  weight numeric,
+  sleep_hours numeric,
+  water_ml integer,
+  stress integer
+);
+
+-- Notifications center
+create table if not exists notifications (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) not null,
+  title text not null,
+  message text,
+  due_at timestamptz,
+  status text default 'pending',
+  created_at timestamptz default now()
+);
+
+-- Goal milestones and subtasks
+create table if not exists goals_milestones (
+  id uuid default gen_random_uuid() primary key,
+  goal_id uuid not null references goals(id) on delete cascade,
+  title text not null,
+  due_date date,
+  status text default 'pending',
+  created_at timestamptz default now()
+);
+
+create table if not exists goals_subtasks (
+  id uuid default gen_random_uuid() primary key,
+  milestone_id uuid not null references goals_milestones(id) on delete cascade,
+  title text not null,
+  status text default 'todo',
+  created_at timestamptz default now()
+);
+
 -- Favorites for scripture verses
 create table if not exists scripture_favorites (
   id uuid primary key default uuid_generate_v4(),

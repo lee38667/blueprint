@@ -1,7 +1,20 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { createClient } from '@supabase/supabase-js'
+import { AISnapshot, formatSnapshotForAI } from '../../lib/aiSnapshot'
 
-type Data = { insight: string } | { error: string }
+type BrainInsight = {
+  summary: string
+  taskSuggestions: string[]
+  goalHighlights: string[]
+  wellnessNote?: string
+  riskAlerts?: string[]
+}
+
+type Data = {
+  insight?: string
+  brain?: BrainInsight
+  error?: string
+}
 
 export default async function handler(
   req: NextApiRequest,
@@ -19,7 +32,11 @@ export default async function handler(
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-  const { mood, mode = 'mood' } = req.body as { mood?: string; mode?: 'mood' | 'focus' }
+  const { mood, mode = 'mood', snapshot } = req.body as {
+    mood?: string
+    mode?: 'mood' | 'focus' | 'brain'
+    snapshot?: AISnapshot
+  }
 
   if (!mood && mode === 'mood') {
     return res.status(400).json({ error: 'Mood is required' })
@@ -76,6 +93,71 @@ export default async function handler(
       mode === 'focus'
         ? `The user reports feeling: ${mood ?? 'unspecified'}.\n\n${goalsSummary || 'No goals on record.'}\n\n${moodSummary || 'No recent mood logs.'}\n\nGiven this, suggest what they should focus on TODAY in 3–5 short bullet points. Be concrete, gentle, and realistic for a single day.`
         : `The user reports feeling: ${mood}. Respond with a brief, actionable insight and encouragement.`
+
+    if (mode === 'brain') {
+      if (!snapshot) {
+        return res.status(400).json({ error: 'Snapshot is required for brain mode' })
+      }
+
+      const compiled = formatSnapshotForAI(snapshot)
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-5.1-mini',
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are the intelligence layer for a personal operating system. Analyze cross-domain data and return structured, prioritized guidance.'
+            },
+            {
+              role: 'user',
+              content:
+                'Use the structured data below to craft JSON advice with keys summary, taskSuggestions, goalHighlights, wellnessNote, riskAlerts. Keep each array under 4 bullet points. Data:\n' +
+                compiled
+            }
+          ],
+          temperature: 0.5,
+          max_tokens: 320
+        })
+      })
+
+      if (!response.ok) {
+        const text = await response.text()
+        console.error('AI API error:', text)
+        return res.status(500).json({ error: 'Failed to fetch AI insight' })
+      }
+
+      const json: any = await response.json()
+      const content = json.choices?.[0]?.message?.content?.trim() || ''
+      const cleaned = content.replace(/```json|```/g, '').trim()
+
+      try {
+        const parsed = JSON.parse(cleaned)
+        const brain: BrainInsight = {
+          summary: parsed.summary ?? 'No summary provided.',
+          taskSuggestions: parsed.taskSuggestions ?? [],
+          goalHighlights: parsed.goalHighlights ?? [],
+          wellnessNote: parsed.wellnessNote,
+          riskAlerts: parsed.riskAlerts ?? []
+        }
+        return res.status(200).json({ brain })
+      } catch (error) {
+        console.error('Brain insight parse error', error, cleaned)
+        return res.status(200).json({
+          brain: {
+            summary: 'AI returned an invalid response. Please try again.',
+            taskSuggestions: [],
+            goalHighlights: [],
+            riskAlerts: ['AI response failed to parse.']
+          }
+        })
+      }
+    }
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',

@@ -77,6 +77,8 @@ export default function Sidebar(){
         <NavItem href="/finance" label="Finance" icon={Icons.Finance} collapsed={collapsed} />
         <NavItem href="/skills" label="Skills" icon={Icons.Skills} collapsed={collapsed} />
         <NavItem href="/content" label="Content" icon={Icons.Content} collapsed={collapsed} />
+        <NavItem href="/mental" label="Mental Health" icon={Icons.Settings} collapsed={collapsed} />
+        <NavItem href="/notifications" label="Notifications" icon={Icons.Settings} collapsed={collapsed} />
         {/* Demo route removed during cleanup */}
       </nav>
 

@@ -1,36 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
-
-export interface Goal {
-  id: string
-  title: string
-  category: string | null
-  target_date: string | null
-  status: string
-  progress_note: string | null
-}
+import { useDataStore } from '../lib/dataStore'
+import type { Goal, Milestone, Subtask } from '../types/models'
 
 export function useGoals() {
-  const [goals, setGoals] = useState<Goal[]>([])
-  const [loading, setLoading] = useState(true)
+  const goals = useDataStore(s => s.goals)
+  const milestones = useDataStore(s => s.milestones)
+  const subtasks = useDataStore(s => s.subtasks)
+  const loading = useDataStore(s => s.goalsLoading)
+  const loaded = useDataStore(s => s.goalsLoaded)
+  const fetchGoalsBundle = useDataStore(s => s.fetchGoalsBundle)
 
   useEffect(() => {
-    let mounted = true
-    const load = async () => {
-      setLoading(true)
-      const { data } = await supabase
-        .from('goals')
-        .select('id,title,category,target_date,status,progress_note')
-        .order('created_at', { ascending: false })
-      if (!mounted) return
-      setGoals((data ?? []) as Goal[])
-      setLoading(false)
-    }
-    load()
-    return () => {
-      mounted = false
-    }
-  }, [])
+    if (!loaded) fetchGoalsBundle()
+  }, [loaded, fetchGoalsBundle])
 
   const addGoal = async (payload: Partial<Goal>) => {
     await supabase.from('goals').insert({
@@ -40,13 +23,44 @@ export function useGoals() {
       status: payload.status ?? 'active',
       progress_note: payload.progress_note
     })
+    await fetchGoalsBundle()
   }
 
   const updateStatus = async (id: string, status: string) => {
     await supabase.from('goals').update({ status }).eq('id', id)
+    await fetchGoalsBundle()
   }
 
-  return { goals, loading, addGoal, updateStatus }
+  const addMilestone = async (goal_id: string, payload: Partial<Milestone>) => {
+    await supabase.from('goals_milestones').insert({
+      goal_id,
+      title: payload.title,
+      due_date: payload.due_date ?? null,
+      status: payload.status ?? 'pending'
+    })
+    await fetchGoalsBundle()
+  }
+
+  const updateMilestone = async (id: string, patch: Partial<Milestone>) => {
+    await supabase.from('goals_milestones').update(patch).eq('id', id)
+    await fetchGoalsBundle()
+  }
+
+  const addSubtask = async (milestone_id: string, payload: Partial<Subtask>) => {
+    await supabase.from('goals_subtasks').insert({
+      milestone_id,
+      title: payload.title,
+      status: payload.status ?? 'todo'
+    })
+    await fetchGoalsBundle()
+  }
+
+  const updateSubtask = async (id: string, patch: Partial<Subtask>) => {
+    await supabase.from('goals_subtasks').update(patch).eq('id', id)
+    await fetchGoalsBundle()
+  }
+
+  return { goals, milestones, subtasks, loading, addGoal, updateStatus, addMilestone, updateMilestone, addSubtask, updateSubtask }
 }
 
 export default useGoals

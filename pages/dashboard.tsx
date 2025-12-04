@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import Sidebar from '../components/Sidebar'
 import Navbar from '../components/Navbar'
 import Card from '../components/Card'
@@ -6,13 +7,33 @@ import AICopilotTester from '../components/AICopilotTester'
 import ChartComponent from '../components/Chart'
 import ScriptureCard from '../components/ScriptureCard'
 import MotivationQuoteCard from '../components/MotivationQuoteCard'
+import AICopilotInsightsCard from '../components/AICopilotInsightsCard'
 import { useDashboard } from '../hooks/useDashboard'
 import { useTasks } from '../hooks/useTasks'
+import { useBodyStats } from '../hooks/useBodyStats'
 
 export default function DashboardPage() {
   const { data, loading } = useDashboard()
   const { tasks, addTask, updateTask } = useTasks()
   const quickTasks = tasks.filter(t => t.status !== 'done').slice(0, 5)
+  const { stats, addStat } = useBodyStats()
+  const [weight, setWeight] = useState('')
+  const [sleep, setSleep] = useState('')
+  const [water, setWater] = useState('')
+  const [stress, setStress] = useState('')
+  const recentStats = [...stats].slice(-5).reverse()
+
+  const handleBodySubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!weight && !sleep && !water && !stress) return
+    await addStat({
+      weight: weight ? parseFloat(weight) : null,
+      sleep_hours: sleep ? parseFloat(sleep) : null,
+      water_ml: water ? parseInt(water) : null,
+      stress: stress ? parseInt(stress) : null
+    })
+    setWeight(''); setSleep(''); setWater(''); setStress('')
+  }
 
   return (
     <div className="min-h-screen flex text-white font-sans selection:bg-electric selection:text-black app-shell">
@@ -94,9 +115,37 @@ export default function DashboardPage() {
                 <DailyFocusCard />
                 <MotivationQuoteCard />
                 <ScriptureCard />
+                <AICopilotInsightsCard />
                 <AICopilotTester />
               </div>
             </div>
+
+            {/* Body Stats Quick Log */}
+            <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card title="Body Stats Quick Log">
+                <form onSubmit={handleBodySubmit} className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <input value={weight} onChange={e=>setWeight(e.target.value)} placeholder="Weight" className="rounded bg-black/40 border border-white/10 px-3 py-2 text-sm" />
+                  <input value={sleep} onChange={e=>setSleep(e.target.value)} placeholder="Sleep hrs" className="rounded bg-black/40 border border-white/10 px-3 py-2 text-sm" />
+                  <input value={water} onChange={e=>setWater(e.target.value)} placeholder="Water ml" className="rounded bg-black/40 border border-white/10 px-3 py-2 text-sm" />
+                  <input value={stress} onChange={e=>setStress(e.target.value)} placeholder="Stress" className="rounded bg-black/40 border border-white/10 px-3 py-2 text-sm" />
+                  <button className="btn-glow px-4 py-2 rounded text-xs md:col-span-4">Log Stats</button>
+                </form>
+              </Card>
+              <Card title="Recent Body Metrics">
+                <div className="space-y-2">
+                  {recentStats.length === 0 ? (
+                    <div className="subtle-muted">No entries yet.</div>
+                  ) : recentStats.map(stat => (
+                    <div key={stat.id} className="flex items-center justify-between p-2 rounded border border-white/10 bg-white/5 text-sm">
+                      <div>
+                        <div className="font-medium">{new Date(stat.recorded_at).toLocaleDateString()}</div>
+                        <div className="text-xs text-neutral-500">Weight {stat.weight ?? '—'} • Sleep {stat.sleep_hours ?? '—'} • Water {stat.water_ml ?? '—'} ml • Stress {stat.stress ?? '—'}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </section>
 
             {/* Gym Section */}
             <section>

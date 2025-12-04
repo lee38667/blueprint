@@ -1,36 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
-
-export interface Task {
-  id: string
-  title: string
-  description: string | null
-  priority: 'low' | 'normal' | 'high'
-  status: 'todo' | 'in_progress' | 'done'
-  project: string | null
-  due_date: string | null
-  created_at: string
-}
+import { useDataStore } from '../lib/dataStore'
+import type { Task } from '../types/models'
 
 export function useTasks() {
-  const [tasks, setTasks] = useState<Task[]>([])
-  const [loading, setLoading] = useState(true)
+  const tasks = useDataStore(s => s.tasks)
+  const loading = useDataStore(s => s.tasksLoading)
+  const loaded = useDataStore(s => s.tasksLoaded)
+  const fetchTasks = useDataStore(s => s.fetchTasks)
 
   useEffect(() => {
-    let mounted = true
-    const load = async () => {
-      setLoading(true)
-      const { data } = await supabase
-        .from('tasks')
-        .select('id,title,description,priority,status,project,due_date,created_at')
-        .order('created_at', { ascending: false })
-      if (!mounted) return
-      setTasks((data ?? []) as Task[])
-      setLoading(false)
-    }
-    load()
-    return () => { mounted = false }
-  }, [])
+    if (!loaded) fetchTasks()
+  }, [loaded, fetchTasks])
 
   const addTask = async (payload: Partial<Task>) => {
     const { error } = await supabase.from('tasks').insert({
@@ -42,16 +23,19 @@ export function useTasks() {
       due_date: payload.due_date ?? null
     })
     if (error) throw error
+    await fetchTasks()
   }
 
   const updateTask = async (id: string, patch: Partial<Task>) => {
     const { error } = await supabase.from('tasks').update(patch).eq('id', id)
     if (error) throw error
+    await fetchTasks()
   }
 
   const removeTask = async (id: string) => {
     const { error } = await supabase.from('tasks').delete().eq('id', id)
     if (error) throw error
+    await fetchTasks()
   }
 
   return { tasks, loading, addTask, updateTask, removeTask }

@@ -10,6 +10,10 @@ export default function SettingsPage(){
   const setAnimations = useStore(s=> s.setAnimationsEnabled)
   const fontSize = useStore(s=> s.baseFontSize)
   const setFontSize = useStore(s=> s.setBaseFontSize)
+  const twoFactorEnabled = useStore(s=> s.twoFactorEnabled)
+  const setTwoFactor = useStore(s=> s.setTwoFactorEnabled)
+  const sessionTimeout = useStore(s=> s.sessionTimeoutMinutes)
+  const setSessionTimeout = useStore(s=> s.setSessionTimeoutMinutes)
 
   return (
     <div className="min-h-screen flex">
@@ -46,6 +50,24 @@ export default function SettingsPage(){
                 <div className="text-sm text-neutral-400 mb-2">Base Typography Size</div>
                 <input type="range" min={14} max={18} value={fontSize} onChange={e=>setFontSize(parseInt(e.target.value))} />
                 <div className="text-xs subtle-muted mt-1">{fontSize}px</div>
+              </div>
+            </div>
+          </Card>
+          <Card title="Security">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm text-neutral-400">Two-Factor Authentication</div>
+                  <div className="text-xs subtle-muted">Enable code verification on login.</div>
+                </div>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={twoFactorEnabled} onChange={e=>setTwoFactor(e.target.checked)} />
+                  <span className="text-sm">{twoFactorEnabled ? 'On' : 'Off'}</span>
+                </label>
+              </div>
+              <div>
+                <div className="text-sm text-neutral-400 mb-2">Session Timeout (minutes)</div>
+                <input type="number" min={5} max={120} value={sessionTimeout} onChange={e=>setSessionTimeout(parseInt(e.target.value) || 15)} className="rounded bg-black/40 border border-white/10 px-3 py-2 text-sm" />
               </div>
             </div>
           </Card>
