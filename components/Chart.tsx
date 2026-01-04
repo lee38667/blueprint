@@ -28,14 +28,36 @@ interface ChartProps {
   labels: string[];
   color?: string;
   height?: number;
+  showLegend?: boolean;
+  showAxes?: boolean;
+  xAxisLabel?: string;
+  yAxisLabel?: string;
+  legendPosition?: 'top' | 'bottom' | 'left' | 'right';
 }
 
-export default function ChartComponent({ data, labels, color = '#00E5FF', height = 100 }: ChartProps) {
-  const options = {
+export default function ChartComponent({ 
+  data, 
+  labels, 
+  color = '#00E5FF', 
+  height = 100,
+  showLegend = false,
+  showAxes = false,
+  xAxisLabel = '',
+  yAxisLabel = '',
+  legendPosition = 'top'
+}: ChartProps) {
+  const options: any = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { display: false },
+      legend: { 
+        display: showLegend,
+        position: legendPosition,
+        labels: {
+          color: '#a1a1aa',
+          font: { size: 12 }
+        }
+      },
       tooltip: {
         enabled: true,
         mode: 'index' as const,
@@ -54,14 +76,42 @@ export default function ChartComponent({ data, labels, color = '#00E5FF', height
     },
     scales: {
       x: {
-        display: false,
-        grid: { display: false }
+        display: showAxes,
+        title: {
+          display: showAxes && !!xAxisLabel,
+          text: xAxisLabel,
+          color: '#a1a1aa',
+          font: { size: 11, weight: 500 }
+        },
+        grid: { 
+          display: showAxes,
+          color: 'rgba(255, 255, 255, 0.1)',
+          drawBorder: false
+        },
+        ticks: {
+          color: '#71717a',
+          font: { size: 10 }
+        }
       },
       y: {
-        display: false,
-        grid: { display: false },
-        min: Math.min(...data) * 0.95,
-        max: Math.max(...data) * 1.05
+        display: showAxes,
+        title: {
+          display: showAxes && !!yAxisLabel,
+          text: yAxisLabel,
+          color: '#a1a1aa',
+          font: { size: 11, weight: 500 }
+        },
+        grid: { 
+          display: showAxes,
+          color: 'rgba(255, 255, 255, 0.1)',
+          drawBorder: false
+        },
+        ticks: {
+          color: '#71717a',
+          font: { size: 10 }
+        },
+        min: showAxes ? undefined : Math.min(...data) * 0.95,
+        max: showAxes ? undefined : Math.max(...data) * 1.05
       }
     },
     interaction: {

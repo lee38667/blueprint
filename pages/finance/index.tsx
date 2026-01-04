@@ -2,6 +2,7 @@ import Sidebar from '../../components/Sidebar'
 import Navbar from '../../components/Navbar'
 import Card from '../../components/Card'
 import Button from '../../components/Button'
+import TrendIndicator from '../../components/TrendIndicator'
 import { useFinance } from '../../hooks/useFinance'
 import useFinanceAdvisor from '../../hooks/useFinanceAdvisor'
 import ChartComponent from '../../components/Chart'
@@ -160,7 +161,27 @@ export default function FinancePage(){
               {projections.length === 0 ? (
                 <div className="text-sm subtle-muted">Add at least two balance entries to visualize momentum.</div>
               ) : (
-                <ChartComponent data={projections.map(p => p.value)} labels={projections.map(p => p.label)} color="#7C5CFF" height={200} />
+                <>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs text-neutral-400">Balance Forecast</span>
+                    {history.length >= 14 && (
+                      <TrendIndicator 
+                        data={history.slice(-14).map((h: any) => h.balance)} 
+                        periodDays={7}
+                        size="sm"
+                      />
+                    )}
+                  </div>
+                  <ChartComponent 
+                    data={projections.map(p => p.value)} 
+                    labels={projections.map(p => p.label)} 
+                    color="#7C5CFF" 
+                    height={200}
+                    showAxes={true}
+                    xAxisLabel="Month"
+                    yAxisLabel="Balance ($)"
+                  />
+                </>
               )}
               {summary?.balance != null && (
                 <p className="text-xs text-neutral-400 mt-3">Current balance ${Number(summary.balance).toLocaleString()}</p>

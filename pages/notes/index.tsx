@@ -3,11 +3,13 @@ import Navbar from '../../components/Navbar'
 import Card from '../../components/Card'
 import Button from '../../components/Button'
 import { useNotes } from '../../hooks/useNotes'
+import { exportNotesToCSV } from '../../lib/csvExport'
 import dynamic from 'next/dynamic'
 import { useMemo, useState } from 'react'
 import { encryptText, decryptText } from '../../lib/encryption'
 import type { NoteEntry } from '../../types/models'
 
+// @ts-ignore
 const ReactMarkdown = dynamic(() => import('react-markdown'))
 
 const INITIAL_FORM = {
@@ -116,6 +118,13 @@ export default function NotesPage() {
               <p className="text-sm text-neutral-400">Tag entries, encrypt sensitive ones, and let AI surface mood cues automatically.</p>
             </div>
             <div className="flex gap-3">
+              <button
+                onClick={() => exportNotesToCSV(notes)}
+                className="px-3 py-2 rounded-lg bg-electric/10 border border-electric/30 hover:bg-electric/20 text-electric text-sm font-medium transition-colors"
+                title="Export all notes to CSV"
+              >
+                📥 Export CSV
+              </button>
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}

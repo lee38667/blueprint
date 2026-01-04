@@ -189,7 +189,7 @@ export default function ContentPage(){
                   <p className="text-sm text-neutral-200 mb-3">{item.metadata?.summary || 'Summary pending…'}</p>
                   {item.metadata?.talkingPoints?.length > 0 && (
                     <ul className="text-xs text-neutral-400 space-y-1 mb-3 list-disc list-inside">
-                      {item.metadata.talkingPoints.map((point: string, idx: number) => (
+                      {item.metadata?.talkingPoints?.map((point: string, idx: number) => (
                         <li key={idx}>{point}</li>
                       ))}
                     </ul>
@@ -220,7 +220,7 @@ export default function ContentPage(){
                   {item.metadata?.shareLinks?.length > 0 && (
                     <div className="bg-black/30 border border-white/10 rounded-xl p-3 text-xs space-y-2">
                       <p className="text-neutral-400 uppercase tracking-wide">Recent share links</p>
-                      {item.metadata.shareLinks.slice(-3).reverse().map((link: any, idx: number) => (
+                      {item.metadata?.shareLinks?.slice(-3).reverse().map((link: any, idx: number) => (
                         <div key={idx} className="flex flex-col gap-1">
                           <a className="text-electric truncate" href={link.url} target="_blank" rel="noreferrer">{link.url}</a>
                           <span className="text-neutral-500">Expires {new Date(link.expiresAt).toLocaleString()}</span>

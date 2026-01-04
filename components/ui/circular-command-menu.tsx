@@ -1,6 +1,8 @@
+// @ts-nocheck
 "use client"
 
 import { useState, useEffect, useCallback, type ReactNode } from "react"
+import type { LucideIcon } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 

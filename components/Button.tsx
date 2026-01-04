@@ -5,9 +5,11 @@ interface ButtonProps {
   onClick?: () => void
   variant?: 'primary' | 'secondary' | 'outline'
   className?: string
+  disabled?: boolean
+  type?: 'button' | 'submit' | 'reset'
 }
 
-export default function Button({ children, onClick, variant = 'primary', className = '' }: ButtonProps){
+export default function Button({ children, onClick, variant = 'primary', className = '', disabled = false, type = 'button' }: ButtonProps){
   const baseStyles = "px-5 py-2.5 rounded-lg font-medium transition-all duration-300 flex items-center justify-center tracking-wide font-sans text-sm"
   
   const variants = {
@@ -16,12 +18,17 @@ export default function Button({ children, onClick, variant = 'primary', classNa
     outline: "border border-white/20 text-minimal-white hover:border-electric hover:text-electric hover:bg-electric/5"
   }
 
+  const disabledStyles = disabled ? 'opacity-50 cursor-not-allowed hover:scale-100 hover:shadow-none' : ''
+
   return (
     <button 
       onClick={onClick} 
-      className={`${baseStyles} ${variants[variant]} ${className}`}
+      disabled={disabled}
+      type={type}
+      className={`${baseStyles} ${variants[variant]} ${disabledStyles} ${className}`}
     >
       {children}
     </button>
   )
 }
+

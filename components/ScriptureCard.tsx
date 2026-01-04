@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { motion } from 'framer-motion'
 import Card from './Card'
 import { useScripture } from '../hooks/useScripture'

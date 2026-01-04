@@ -3,6 +3,7 @@ import Navbar from '../../components/Navbar'
 import Card from '../../components/Card'
 import Button from '../../components/Button'
 import AICopilotInsightsCard from '../../components/AICopilotInsightsCard'
+import ProgressBar, { calculateGoalProgress, calculateMilestoneProgress } from '../../components/ProgressBar'
 import { useGoals } from '../../hooks/useGoals'
 import useGoalCoach from '../../hooks/useGoalCoach'
 import { useState } from 'react'
@@ -188,15 +189,48 @@ export default function GoalsPage(){
                   {goal.target_date && (
                     <div className="text-[11px] text-gray-500">Target: {goal.target_date}</div>
                   )}
+                  
+                  {/* Progress Bar */}
+                  {(() => {
+                    const goalMilestones = milestones.filter(m=>m.goal_id===goal.id)
+                    const progress = calculateGoalProgress(goalMilestones)
+                    return progress.total > 0 ? (
+                      <div className="mt-2">
+                        <ProgressBar 
+                          current={progress.current} 
+                          total={progress.total} 
+                          size="sm"
+                          showPercentage={true}
+                        />
+                      </div>
+                    ) : null
+                  })()}
+
                   <div className="mt-2">
                     <div className="text-[11px] text-neutral-400 mb-1">Milestones</div>
                     <div className="space-y-2">
                       {milestones.filter(m=>m.goal_id===goal.id).map(m => (
                         <div key={m.id} className="p-2 rounded border border-white/10 bg-white/5">
                           <div className="flex items-center justify-between">
-                            <div>
+                            <div className="flex-1">
                               <div className="text-sm">{m.title}</div>
                               <div className="text-[11px] text-gray-500">{m.due_date || 'No due date'}</div>
+                              
+                              {/* Milestone Progress Bar for Subtasks */}
+                              {(() => {
+                                const milestoneSubtasks = subtasks.filter(s=>s.milestone_id===m.id)
+                                const progress = calculateMilestoneProgress(milestoneSubtasks)
+                                return progress.total > 0 ? (
+                                  <div className="mt-1.5">
+                                    <ProgressBar 
+                                      current={progress.current} 
+                                      total={progress.total} 
+                                      size="sm"
+                                      showPercentage={false}
+                                    />
+                                  </div>
+                                ) : null
+                              })()}
                             </div>
                             <div className="flex gap-2 text-[11px]">
                               <button onClick={()=>updateMilestone(m.id, { status: 'pending' })} className="px-2 py-0.5 rounded bg-white/5">Pending</button>

@@ -30,7 +30,7 @@ export default function SettingsPage(){
               <div>
                 <div className="text-sm text-neutral-400 mb-2">Accent Color</div>
                 <div className="flex gap-2">
-                  {['electric','neon','teal'].map(c => (
+                  {(['electric','neon','teal'] as const).map(c => (
                     <button key={c} onClick={()=>setAccent(c)} className={`w-8 h-8 rounded-full border ${accent===c? 'ring-2 ring-white/50':''}`} style={{ background:
                       c==='electric' ? '#00E5FF' : c==='neon' ? '#B300FF' : '#14B8A6' }} />
                   ))}
