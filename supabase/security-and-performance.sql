@@ -496,7 +496,7 @@ $$ LANGUAGE plpgsql;
 -- PART 4B: GAMIFICATION MIGRATIONS, RLS, AND INDEXES
 -- ============================================
 
-DO 
+DO $$
 BEGIN
   IF EXISTS (
     SELECT 1
@@ -509,7 +509,7 @@ BEGIN
   END IF;
 EXCEPTION WHEN undefined_column THEN
   NULL;
-END ;
+END $$;
 
 ALTER TABLE skills ADD COLUMN IF NOT EXISTS level integer default 1;
 ALTER TABLE skills ADD COLUMN IF NOT EXISTS description text;
