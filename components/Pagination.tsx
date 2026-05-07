@@ -1,3 +1,5 @@
+import React from 'react'
+
 interface PaginationProps {
   currentPage: number
   totalItems: number
@@ -14,7 +16,7 @@ export default function Pagination({
   maxVisiblePages = 5
 }: PaginationProps) {
   const totalPages = Math.ceil(totalItems / itemsPerPage)
-  
+
   if (totalPages <= 1) return null
 
   const getPageNumbers = (): (number | string)[] => {
@@ -27,21 +29,18 @@ export default function Pagination({
     const rightOffset = Math.ceil((maxVisiblePages - 3) / 2)
 
     if (currentPage <= leftOffset + 2) {
-      // Near start
       for (let i = 1; i <= maxVisiblePages - 1; i++) {
         pages.push(i)
       }
       pages.push('...')
       pages.push(totalPages)
     } else if (currentPage >= totalPages - rightOffset - 1) {
-      // Near end
       pages.push(1)
       pages.push('...')
       for (let i = totalPages - maxVisiblePages + 2; i <= totalPages; i++) {
         pages.push(i)
       }
     } else {
-      // Middle
       pages.push(1)
       pages.push('...')
       for (let i = currentPage - leftOffset; i <= currentPage + rightOffset; i++) {
@@ -57,46 +56,50 @@ export default function Pagination({
   const pageNumbers = getPageNumbers()
 
   return (
-    <div className="flex items-center justify-between border-t border-white/10 bg-black/20 px-4 py-3 sm:px-6 rounded-b-lg">
+    <div
+      className="flex items-center justify-between px-4 py-3 sm:px-6 rounded-b-lg"
+      style={{ borderTop: '1px solid var(--theme-border)', background: 'var(--theme-surface)' }}
+    >
       <div className="flex flex-1 justify-between sm:hidden">
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="relative inline-flex items-center rounded-md border border-white/20 bg-black/40 px-4 py-2 text-sm font-medium text-neutral-300 hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn-outline btn-sm disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Previous
         </button>
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="relative ml-3 inline-flex items-center rounded-md border border-white/20 bg-black/40 px-4 py-2 text-sm font-medium text-neutral-300 hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn-outline btn-sm disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Next
         </button>
       </div>
-      
+
       <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm text-neutral-400">
+          <p className="text-sm" style={{ color: 'var(--theme-text-muted)' }}>
             Showing{' '}
-            <span className="font-medium text-neutral-200">
+            <span className="font-medium" style={{ color: 'var(--theme-text-dim)' }}>
               {(currentPage - 1) * itemsPerPage + 1}
             </span>
             {' '}-{' '}
-            <span className="font-medium text-neutral-200">
+            <span className="font-medium" style={{ color: 'var(--theme-text-dim)' }}>
               {Math.min(currentPage * itemsPerPage, totalItems)}
             </span>
             {' '}of{' '}
-            <span className="font-medium text-neutral-200">{totalItems}</span>
+            <span className="font-medium" style={{ color: 'var(--theme-text-dim)' }}>{totalItems}</span>
             {' '}results
           </p>
         </div>
-        
-        <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+
+        <nav className="isolate inline-flex -space-x-px rounded-md" aria-label="Pagination">
           <button
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage === 1}
-            className="relative inline-flex items-center rounded-l-md px-2 py-2 text-neutral-400 ring-1 ring-inset ring-white/20 hover:bg-white/5 focus:z-20 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="relative inline-flex items-center rounded-l-md px-2 py-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ color: 'var(--theme-text-muted)', border: '1px solid var(--theme-border)' }}
           >
             <span className="sr-only">Previous</span>
             <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -109,18 +112,23 @@ export default function Pagination({
               <button
                 key={idx}
                 onClick={() => onPageChange(page)}
-                className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset ring-white/20 focus:z-20 ${
-                  page === currentPage
-                    ? 'z-10 bg-electric text-black'
-                    : 'text-neutral-300 hover:bg-white/5'
-                }`}
+                aria-current={page === currentPage ? 'page' : undefined}
+                className="relative inline-flex items-center px-4 py-2 text-sm font-semibold transition-colors focus:z-20"
+                style={{
+                  border: '1px solid var(--theme-border)',
+                  ...(page === currentPage
+                    ? { background: 'var(--theme-accent)', color: 'var(--theme-accent-text)' }
+                    : { color: 'var(--theme-text-dim)' }
+                  ),
+                }}
               >
                 {page}
               </button>
             ) : (
               <span
                 key={idx}
-                className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-neutral-500 ring-1 ring-inset ring-white/20"
+                className="relative inline-flex items-center px-4 py-2 text-sm font-semibold"
+                style={{ color: 'var(--theme-text-muted)', border: '1px solid var(--theme-border)' }}
               >
                 {page}
               </span>
@@ -130,7 +138,8 @@ export default function Pagination({
           <button
             onClick={() => onPageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
-            className="relative inline-flex items-center rounded-r-md px-2 py-2 text-neutral-400 ring-1 ring-inset ring-white/20 hover:bg-white/5 focus:z-20 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="relative inline-flex items-center rounded-r-md px-2 py-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ color: 'var(--theme-text-muted)', border: '1px solid var(--theme-border)' }}
           >
             <span className="sr-only">Next</span>
             <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -146,7 +155,7 @@ export default function Pagination({
 // Hook for managing pagination state
 export function usePagination(totalItems: number, itemsPerPage: number = 50) {
   const [currentPage, setCurrentPage] = React.useState(1)
-  
+
   const totalPages = Math.ceil(totalItems / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
   const endIndex = startIndex + itemsPerPage
@@ -174,5 +183,3 @@ export function usePagination(totalItems: number, itemsPerPage: number = 50) {
     hasPrev: currentPage > 1
   }
 }
-
-import React from 'react'

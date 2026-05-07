@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+﻿import { useEffect, useMemo } from 'react'
 import { AISnapshot } from '../lib/aiSnapshot'
 import useTasks from './useTasks'
 import useGoals from './useGoals'
@@ -6,7 +6,9 @@ import useFinance from './useFinance'
 import useMoodLogs from './useMoodLogs'
 import useBodyStats from './useBodyStats'
 import useNotes from './useNotes'
+import useHabits from './useHabits'
 import useAICopilot from './useAICopilot'
+import useGamification from './useGamification'
 
 interface Options {
   auto?: boolean
@@ -20,42 +22,58 @@ export function useAIBrain(options: Options = {}) {
   const { stats, loading: statsLoading } = useBodyStats()
   const { summary, targets, loading: financeLoading } = useFinance()
   const { notes, loading: notesLoading } = useNotes()
+  const { habits, loading: habitsLoading, getStreak } = useHabits()
+  const { bodyWorkouts, loaded: gamificationLoaded } = useGamification()
   const { brainInsights, brainLoading, brainError, analyzeSnapshot } = useAICopilot()
 
   const snapshot: AISnapshot = useMemo(() => {
     return {
-      tasks: tasks.slice(0, 12).map(t => ({
+      tasks: tasks.slice(0, 12).map((t) => ({
         title: t.title,
         status: t.status,
         priority: t.priority,
         project: t.project,
-        due_date: t.due_date
+        due_date: t.due_date,
+        goal_id: t.goal_id,
       })),
-      goals: goals.slice(0, 10).map(g => ({
+      goals: goals.slice(0, 10).map((g) => ({
         title: g.title,
         status: g.status,
-        target_date: g.target_date
+        target_date: g.target_date,
       })),
       moods: moodLogs.slice(-10),
       bodyStats: stats.slice(-10),
+      bodyWorkouts: bodyWorkouts.slice(0, 12).map((workout) => ({
+        body_part: workout.body_part,
+        reps: workout.reps,
+        sets: workout.sets,
+        notes: workout.notes,
+        logged_at: workout.logged_at,
+      })),
       finance: {
         balance: summary?.balance ?? null,
         savings: summary?.savings ?? null,
-        targets: targets
+        targets,
       },
       notes: (notes ?? []).slice(0, 5).map((n: any) => ({
         title: n.title ?? n.heading ?? 'Untitled',
-        content: n.content ?? n.body ?? ''
-      }))
+        content: n.content ?? n.body ?? '',
+      })),
+      habits: habits.slice(0, 10).map((h) => ({
+        name: h.name,
+        frequency: h.frequency,
+        currentStreak: getStreak(h.id),
+      })),
     }
-  }, [tasks, goals, moodLogs, stats, summary, targets, notes])
+  }, [tasks, goals, moodLogs, stats, bodyWorkouts, summary, targets, notes, habits, getStreak])
 
-  const ready = !tasksLoading && !goalsLoading && !moodsLoading && !statsLoading && !financeLoading && !notesLoading
+  const ready = !tasksLoading && !goalsLoading && !moodsLoading && !statsLoading && !financeLoading && !notesLoading && !habitsLoading && gamificationLoaded
   const hasData = Boolean(
     snapshot.tasks.length ||
     snapshot.goals.length ||
     snapshot.moods.length ||
     snapshot.bodyStats.length ||
+    snapshot.bodyWorkouts?.length ||
     snapshot.finance?.balance != null ||
     (snapshot.finance?.targets?.length ?? 0) ||
     (snapshot.notes?.length ?? 0)
@@ -73,7 +91,7 @@ export function useAIBrain(options: Options = {}) {
     insights: brainInsights,
     loading: auto ? brainLoading || !ready : brainLoading,
     error: brainError,
-    refresh: () => analyzeSnapshot(snapshot, { force: true })
+    refresh: () => analyzeSnapshot(snapshot, { force: true }),
   }
 }
 

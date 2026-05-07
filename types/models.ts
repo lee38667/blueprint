@@ -6,6 +6,7 @@ export interface Task {
   status: 'todo' | 'in_progress' | 'done'
   project: string | null
   due_date: string | null
+  goal_id: string | null
   created_at: string
 }
 
@@ -145,4 +146,103 @@ export interface FinanceCoachAdvice {
   guardrails: string[]
   opportunities: string[]
   cashflowScore: number
+}
+
+export interface Habit {
+  id: string
+  name: string
+  frequency: 'daily' | 'weekly'
+  created_at: string
+}
+
+export interface HabitLog {
+  id: string
+  habit_id: string
+  logged_at: string
+  completed: boolean
+}
+
+export interface DailyBriefing {
+  greeting: string
+  priorityTasks: Array<{ title: string; priority: string; dueInfo?: string }>
+  overdueAlerts: string[]
+  moodTrend: string
+  financialNote: string
+  focusRecommendation: string
+  generatedAt: string
+}
+
+export type QuestType = 'task' | 'habit' | 'workout' | 'body_part'
+
+export type QuestStatus = 'pending' | 'completed' | 'failed'
+
+export type BodyPart = 'head' | 'arms' | 'chest' | 'abs' | 'legs' | 'back'
+
+export interface GamificationProfile {
+  id: string
+  user_id: string
+  level: number
+  exp: number
+  gold: number
+  class: string
+  unlocked_areas: BodyPart[]
+  created_at: string
+  updated_at: string
+}
+
+export interface Quest {
+  id: string
+  user_id: string
+  name: string
+  type: QuestType
+  description: string
+  exp_reward: number
+  gold_reward: number
+  status: QuestStatus
+  linked_entity_id: string | null
+  body_part: BodyPart | null
+  quest_date: string
+  created_at: string
+  updated_at: string
+}
+
+export interface Skill {
+  id: string
+  user_id: string
+  name: string
+  level: number
+  description: string | null
+  kind?: string | null
+  created_at?: string
+}
+
+export type CoachingTone = 'direct' | 'gentle' | 'analytical' | 'encouraging'
+
+export interface UserProfile {
+  id: string
+  user_id: string
+  display_name: string | null
+  avatar_url: string | null
+  timezone: string
+  preferred_currency: string
+  weekly_planning_day: string
+  life_season: string | null
+  primary_roles: string[]
+  core_values: string[]
+  coaching_tone: CoachingTone
+  focus_statement: string | null
+  default_dashboard_zones: string[]
+  created_at: string
+  updated_at: string
+}
+
+export interface BodyWorkout {
+  id: string
+  user_id: string
+  profile_id: string | null
+  body_part: BodyPart
+  reps: number | null
+  sets: number | null
+  notes: string | null
+  logged_at: string
 }

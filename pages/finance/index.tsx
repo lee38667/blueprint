@@ -1,13 +1,14 @@
-import Sidebar from '../../components/Sidebar'
-import Navbar from '../../components/Navbar'
+import Layout from '../../components/Layout'
 import Card from '../../components/Card'
 import Button from '../../components/Button'
 import TrendIndicator from '../../components/TrendIndicator'
 import { useFinance } from '../../hooks/useFinance'
 import useFinanceAdvisor from '../../hooks/useFinanceAdvisor'
 import ChartComponent from '../../components/Chart'
+import { CardSkeleton } from '../../components/Skeleton'
 import { useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
+import { exportFinanceToCSV } from '../../lib/csvExport'
 
 export default function FinancePage(){
   const { summary, loading, history, logs, targets, addLog, addTarget } = useFinance()
@@ -60,62 +61,64 @@ export default function FinancePage(){
   }
 
   return (
-    <div className="min-h-screen flex">
-      <Sidebar />
-      <div className="flex-1">
-        <Navbar />
-        <main className="p-6">
-          <h1 className="text-2xl mb-4">Finance</h1>
+    <Layout>
+      <div className="max-w-7xl mx-auto space-y-6 py-4">
+          <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <h1 className="text-2xl mb-4">Finance</h1>
+            <Button variant="outline" disabled={logs.length === 0} onClick={() => exportFinanceToCSV(logs)}>
+              Export CSV
+            </Button>
+          </header>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card title="Record Balance">
               <form onSubmit={handleRecord} className="space-y-3">
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Current Balance ($)</label>
+                  <label className="block text-xs mb-1" style={{ color: 'var(--theme-text-muted)' }}>Current Balance ($)</label>
                   <input
                     value={balance}
                     onChange={e => setBalance(e.target.value)}
                     type="number"
                     step="0.01"
-                    className="w-full rounded bg-black/40 border border-white/10 px-3 py-2 text-sm outline-none focus:border-electric"
+                    className="input-base w-full"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Note (optional)</label>
+                  <label className="block text-xs mb-1" style={{ color: 'var(--theme-text-muted)' }}>Note (optional)</label>
                   <textarea
                     value={note}
                     onChange={e => setNote(e.target.value)}
                     rows={2}
-                    className="w-full rounded bg-black/40 border border-white/10 px-3 py-2 text-sm outline-none focus:border-electric resize-none"
+                    className="input-base w-full resize-none"
                   />
                 </div>
-                <Button 
-                  variant="primary" 
+                <Button
+                  variant="primary"
                   className={`w-full text-xs ${saving ? 'opacity-60 cursor-not-allowed' : ''}`}
-                  onClick={() => {}}
+                  type="submit"
                 >
-                  {saving ? 'Saving…' : 'Save Balance'}
+                  {saving ? 'Saving...' : 'Save Balance'}
                 </Button>
               </form>
             </Card>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
               <Card title="Income / Expense Log">
                 <form onSubmit={handleAddLog} className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
-                  <select value={logType} onChange={e=>setLogType(e.target.value as any)} className="rounded bg-black/40 border border-white/10 px-3 py-2 text-sm">
+                  <select value={logType} onChange={e=>setLogType(e.target.value as any)} className="input-base w-full">
                     <option value="income">Income</option>
                     <option value="expense">Expense</option>
                   </select>
-                  <input value={logAmount} onChange={e=>setLogAmount(e.target.value)} type="number" step="0.01" placeholder="$ Amount" className="rounded bg-black/40 border border-white/10 px-3 py-2 text-sm" />
-                  <input value={logCategory} onChange={e=>setLogCategory(e.target.value)} placeholder="Category" className="rounded bg-black/40 border border-white/10 px-3 py-2 text-sm" />
-                  <input value={logNote} onChange={e=>setLogNote(e.target.value)} placeholder="Note" className="rounded bg-black/40 border border-white/10 px-3 py-2 text-sm" />
-                  <Button variant="primary" className="text-xs w-full md:w-auto">Add</Button>
+                  <input value={logAmount} onChange={e=>setLogAmount(e.target.value)} type="number" step="0.01" placeholder="$ Amount" className="input-base w-full" />
+                  <input value={logCategory} onChange={e=>setLogCategory(e.target.value)} placeholder="Category" className="input-base w-full" />
+                  <input value={logNote} onChange={e=>setLogNote(e.target.value)} placeholder="Note" className="input-base w-full" />
+                  <Button type="submit" variant="primary" className="text-xs w-full md:w-auto">Add</Button>
                 </form>
                 <div className="mt-4 max-h-48 overflow-y-auto space-y-2">
                   {logs.map(l => (
-                    <div key={l.id} className="flex items-center justify-between p-2 rounded border border-white/10 bg-white/5 text-sm">
+                    <div key={l.id} className="flex items-center justify-between p-2 rounded text-sm" style={{ background: 'var(--theme-surface)', border: '1px solid var(--theme-border)' }}>
                       <div className="flex items-center gap-3">
                         <span className={`px-2 py-0.5 rounded ${l.type==='income'?'bg-teal/20 text-teal':'bg-red-500/20 text-red-300'}`}>{l.type}</span>
                         <span>${l.amount.toFixed(2)}</span>
-                        {l.category && <span className="text-neutral-400">{l.category}</span>}
+                        {l.category && <span style={{ color: 'var(--theme-text-muted)' }}>{l.category}</span>}
                       </div>
                       {l.note && <span className="text-xs text-neutral-500">{l.note}</span>}
                     </div>
@@ -124,13 +127,13 @@ export default function FinancePage(){
               </Card>
               <Card title="Savings Targets">
                 <form onSubmit={handleAddTarget} className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
-                  <input type="month" value={targetMonth} onChange={e=>setTargetMonth(e.target.value)} className="rounded bg-black/40 border border-white/10 px-3 py-2 text-sm" />
-                  <input type="number" step="0.01" value={targetAmount} onChange={e=>setTargetAmount(e.target.value)} placeholder="$ Target" className="rounded bg-black/40 border border-white/10 px-3 py-2 text-sm" />
-                  <Button variant="primary" className="text-xs w-full md:w-auto">Set Target</Button>
+                  <input type="month" value={targetMonth} onChange={e=>setTargetMonth(e.target.value)} className="input-base w-full" />
+                  <input type="number" step="0.01" value={targetAmount} onChange={e=>setTargetAmount(e.target.value)} placeholder="$ Target" className="input-base w-full" />
+                  <Button type="submit" variant="primary" className="text-xs w-full md:w-auto">Set Target</Button>
                 </form>
                 <div className="mt-4 space-y-2">
                   {targets.map(t => (
-                    <div key={t.id} className="flex items-center justify-between p-2 rounded border border-white/10 bg-white/5 text-sm">
+                    <div key={t.id} className="flex items-center justify-between p-2 rounded text-sm" style={{ background: 'var(--theme-surface)', border: '1px solid var(--theme-border)' }}>
                       <span>{t.month}</span>
                       <span className="font-mono">${t.target_amount.toFixed(2)}</span>
                     </div>
@@ -141,14 +144,14 @@ export default function FinancePage(){
             <div className="md:col-span-3">
               <Card title="Balance History">
                 {loading ? (
-                  <div className="card-skeleton h-24" />
+                  <CardSkeleton className="h-24" />
                 ) : (
                   <div className="space-y-2 text-sm">
                     {history.map((h,i) => (
-                      <div key={i} className="flex items-center justify-between p-2 rounded border border-white/10 bg-white/5">
-                        <span className="text-neutral-400">{new Date(h.recorded_at).toLocaleDateString()}</span>
+                      <div key={i} className="flex items-center justify-between p-2 rounded" style={{ background: 'var(--theme-surface)', border: '1px solid var(--theme-border)' }}>
+                        <span style={{ color: 'var(--theme-text-muted)' }}>{new Date(h.recorded_at).toLocaleDateString()}</span>
                         <span className="font-mono">${h.balance}</span>
-                        {h.delta && <span className="text-xs text-teal">Δ {h.delta}</span>}
+                        {h.delta && <span className="text-xs" style={{ color: 'var(--theme-accent)' }}>Delta {h.delta}</span>}
                       </div>
                     ))}
                   </div>
@@ -163,19 +166,19 @@ export default function FinancePage(){
               ) : (
                 <>
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs text-neutral-400">Balance Forecast</span>
+                    <span className="text-xs" style={{ color: 'var(--theme-text-muted)' }}>Balance Forecast</span>
                     {history.length >= 14 && (
-                      <TrendIndicator 
-                        data={history.slice(-14).map((h: any) => h.balance)} 
+                      <TrendIndicator
+                        data={history.slice(-14).map((h: any) => h.balance)}
                         periodDays={7}
                         size="sm"
                       />
                     )}
                   </div>
-                  <ChartComponent 
-                    data={projections.map(p => p.value)} 
-                    labels={projections.map(p => p.label)} 
-                    color="#7C5CFF" 
+                  <ChartComponent
+                    data={projections.map(p => p.value)}
+                    labels={projections.map(p => p.label)}
+                    color="#7C5CFF"
                     height={200}
                     showAxes={true}
                     xAxisLabel="Month"
@@ -184,7 +187,7 @@ export default function FinancePage(){
                 </>
               )}
               {summary?.balance != null && (
-                <p className="text-xs text-neutral-400 mt-3">Current balance ${Number(summary.balance).toLocaleString()}</p>
+                <p className="text-xs mt-3" style={{ color: 'var(--theme-text-muted)' }}>Current balance ${Number(summary.balance).toLocaleString()}</p>
               )}
             </Card>
             <Card title="Category Trends">
@@ -201,10 +204,10 @@ export default function FinancePage(){
                           <span>{trend.category}</span>
                           <span>${total.toFixed(0)}</span>
                         </div>
-                        <div className="h-2 rounded-full bg-white/5">
+                        <div className="h-2 rounded-full" style={{ background: 'var(--theme-surface)' }}>
                           <div className="h-full rounded-l-full bg-teal" style={{ width: `${Math.round((trend.income / safeTotal) * 100)}%` }} />
                         </div>
-                        <div className="h-2 rounded-full bg-white/5 mt-1">
+                        <div className="h-2 rounded-full mt-1" style={{ background: 'var(--theme-surface)' }}>
                           <div className="h-full rounded-l-full bg-red-400" style={{ width: `${Math.round((trend.expense / safeTotal) * 100)}%` }} />
                         </div>
                       </div>
@@ -215,7 +218,7 @@ export default function FinancePage(){
             </Card>
             <Card title="AI Finance Coach">
               {coachLoading ? (
-                <div className="card-skeleton h-24" />
+                <CardSkeleton className="h-24" />
               ) : advice ? (
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center gap-3">
@@ -235,7 +238,7 @@ export default function FinancePage(){
                   )}
                   {advice.opportunities.length > 0 && (
                     <div>
-                      <p className="text-xs uppercase text-teal mb-1">Opportunities</p>
+                      <p className="text-xs uppercase mb-1" style={{ color: 'var(--theme-accent)' }}>Opportunities</p>
                       <ul className="list-disc pl-5 space-y-1 text-neutral-100">
                         {advice.opportunities.map((item, idx) => (
                           <li key={idx}>{item}</li>
@@ -250,8 +253,7 @@ export default function FinancePage(){
               {coachError && <div className="text-xs text-red-400 mt-2">{coachError}</div>}
             </Card>
           </div>
-        </main>
       </div>
-    </div>
+    </Layout>
   )
 }

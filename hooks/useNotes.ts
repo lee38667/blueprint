@@ -3,6 +3,8 @@ import { useDataStore } from '../lib/dataStore'
 import { supabase } from '../lib/supabaseClient'
 import { useToastStore } from '../lib/toastStore'
 import { Validators } from '../lib/validation'
+import { handleError } from '../lib/errors'
+import { supabaseWithRetry } from '../lib/retry'
 import type { NoteEntry } from '../types/models'
 
 interface NotePayload {
@@ -45,51 +47,39 @@ export function useNotes(){
         throw new Error(message)
       }
       
-      const { error: supaError } = await supabase.from('notes').insert({
+      await supabaseWithRetry(() => supabase.from('notes').insert({
         title: payload.title,
         content: payload.content,
         tags: payload.tags ?? [],
         attachments: payload.attachments ?? null
-      })
-      
-      if (supaError) {
-        throw new Error(supaError.message)
-      }
+      }))
       
       await fetchNotes()
       toast.success('Note saved successfully')
     } catch (err: any) {
-      const message = err.message || 'Failed to save note'
-      setError(message)
-      if (!error) toast.error(message)
+      handleError(err, { fallback: 'Failed to save note', setError, toast })
     }
   }, [fetchNotes, toast])
 
   const updateNote = useCallback(async (id: string, patch: Partial<NotePayload>) => {
     try {
       setError(null)
-      const { error: supaError } = await supabase.from('notes').update(patch).eq('id', id)
-      if (supaError) throw new Error(supaError.message)
+      await supabaseWithRetry(() => supabase.from('notes').update(patch).eq('id', id))
       await fetchNotes()
       toast.success('Note updated')
     } catch (err: any) {
-      const message = err.message || 'Failed to update note'
-      setError(message)
-      toast.error(message)
+      handleError(err, { fallback: 'Failed to update note', setError, toast })
     }
   }, [fetchNotes, toast])
 
   const deleteNote = useCallback(async (id: string) => {
     try {
       setError(null)
-      const { error: supaError } = await supabase.from('notes').delete().eq('id', id)
-      if (supaError) throw new Error(supaError.message)
+      await supabaseWithRetry(() => supabase.from('notes').delete().eq('id', id))
       await fetchNotes()
       toast.success('Note deleted')
     } catch (err: any) {
-      const message = err.message || 'Failed to delete note'
-      setError(message)
-      toast.error(message)
+      handleError(err, { fallback: 'Failed to delete note', setError, toast })
     }
   }, [fetchNotes, toast])
 
@@ -126,10 +116,8 @@ export function useNotes(){
       toast.success('Note analysis complete')
       return data
     } catch (err: any) {
-      const message = err.message || 'Failed to analyze note'
-      setError(message)
-      toast.error(message)
-      throw err
+      const message = handleError(err, { fallback: 'Failed to analyze note', setError, toast })
+      throw new Error(message)
     }
   }, [fetchNotes, toast])
 

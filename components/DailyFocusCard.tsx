@@ -11,7 +11,7 @@ export default function DailyFocusCard(){
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-display font-bold text-white tracking-wide uppercase flex items-center gap-2">
-              <span className="text-electric">///</span> Command
+              <span className="text-electric">{"///"}</span> Command
             </h3>
             <div className="flex items-center gap-2">
                <span className="text-[10px] font-mono text-electric/70 uppercase tracking-wider">Active</span>

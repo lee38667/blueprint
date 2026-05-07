@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect } from 'react'
 
@@ -12,32 +11,40 @@ interface ToastProps {
   duration?: number
 }
 
+const toastConfig: Record<ToastType, { icon: string; surface: string; border: string; text: string }> = {
+  success: {
+    icon: '✓',
+    surface: 'var(--color-success-surface)',
+    border: 'var(--color-success-border)',
+    text: 'var(--color-success)',
+  },
+  error: {
+    icon: '✕',
+    surface: 'var(--color-error-surface)',
+    border: 'var(--color-error-border)',
+    text: 'var(--color-error)',
+  },
+  info: {
+    icon: 'ℹ',
+    surface: 'var(--color-info-surface)',
+    border: 'var(--color-info-border)',
+    text: 'var(--color-info)',
+  },
+  warning: {
+    icon: '⚠',
+    surface: 'var(--color-warning-surface)',
+    border: 'var(--color-warning-border)',
+    text: 'var(--color-warning)',
+  },
+}
+
 export function Toast({ id, message, type, onDismiss, duration = 3000 }: ToastProps) {
   useEffect(() => {
     const timer = setTimeout(onDismiss, duration)
     return () => clearTimeout(timer)
   }, [duration, onDismiss])
 
-  const bgColor = {
-    success: 'bg-green-900/30 border-green-800',
-    error: 'bg-red-900/30 border-red-800',
-    info: 'bg-blue-900/30 border-blue-800',
-    warning: 'bg-yellow-900/30 border-yellow-800'
-  }[type]
-
-  const textColor = {
-    success: 'text-green-300',
-    error: 'text-red-300',
-    info: 'text-blue-300',
-    warning: 'text-yellow-300'
-  }[type]
-
-  const icon = {
-    success: '✓',
-    error: '✕',
-    info: 'ℹ',
-    warning: '⚠'
-  }[type]
+  const config = toastConfig[type]
 
   return (
     <motion.div
@@ -45,15 +52,23 @@ export function Toast({ id, message, type, onDismiss, duration = 3000 }: ToastPr
       animate={{ opacity: 1, y: 0, x: 0 }}
       exit={{ opacity: 0, y: -20, x: 20 }}
       transition={{ duration: 0.3 }}
-      className={`${bgColor} border rounded-lg p-3 backdrop-blur-sm flex items-start gap-3 max-w-sm`}
+      role="status"
+      aria-live="polite"
+      className="rounded-lg p-3 backdrop-blur-sm flex items-start gap-3 max-w-sm"
+      style={{
+        background: config.surface,
+        border: `1px solid ${config.border}`,
+      }}
     >
-      <span className={`text-lg font-bold flex-shrink-0 ${textColor}`}>{icon}</span>
+      <span className="text-lg font-bold flex-shrink-0" style={{ color: config.text }}>{config.icon}</span>
       <div className="flex-1">
-        <p className={`text-sm ${textColor}`}>{message}</p>
+        <p className="text-sm" style={{ color: config.text }}>{message}</p>
       </div>
       <button
         onClick={onDismiss}
-        className="text-neutral-400 hover:text-white flex-shrink-0 text-lg leading-none"
+        className="flex-shrink-0 text-lg leading-none transition-colors"
+        style={{ color: 'var(--theme-text-muted)' }}
+        aria-label="Dismiss notification"
       >
         ×
       </button>
@@ -68,7 +83,7 @@ interface ToastContainerProps {
 
 export function ToastContainer({ toasts, onDismiss }: ToastContainerProps) {
   return (
-    <div className="fixed bottom-4 right-4 z-50 space-y-2">
+    <div className="fixed bottom-4 right-4 z-50 space-y-2" aria-label="Notifications">
       <AnimatePresence>
         {toasts.map(toast => (
           <Toast key={toast.id} {...toast} onDismiss={() => onDismiss(toast.id)} />

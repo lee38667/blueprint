@@ -1,15 +1,20 @@
 import { useState } from 'react'
-import Sidebar from '../../components/Sidebar'
-import Navbar from '../../components/Navbar'
+import Layout from '../../components/Layout'
 import Card from '../../components/Card'
 import Button from '../../components/Button'
+import ConfirmDialog from '../../components/ConfirmDialog'
 import { useScriptureFavorites } from '../../hooks/useScriptureFavorites'
 import { useToastStore } from '../../lib/toastStore'
+import { useConfirm } from '../../hooks/useConfirm'
+import { Icons } from '../../components/icons'
+import { CardSkeleton } from '../../components/Skeleton'
 
 export default function ScripturePage() {
   const { favorites, loading, addFavorite, removeFavorite } = useScriptureFavorites()
+  const { confirm, confirmDialog } = useConfirm()
   const [searchReference, setSearchReference] = useState('')
   const [searchLoading, setSearchLoading] = useState(false)
+  const [searchResult, setSearchResult] = useState<{ passages: string[]; canonical: string } | null>(null)
   const toast = useToastStore()
 
   const handleSearch = async () => {
@@ -17,117 +22,129 @@ export default function ScripturePage() {
       toast.error('Please enter a scripture reference (e.g., John 3:16)')
       return
     }
-
     setSearchLoading(true)
+    setSearchResult(null)
     try {
-      // TODO: Wire up public Bible API (e.g., Bible.com API, ESV API)
-      // For now, show placeholder
-      toast.info('Bible API integration coming soon')
-    } catch (error) {
-      toast.error('Failed to fetch scripture')
+      const response = await fetch(`/api/scripture/search?reference=${encodeURIComponent(searchReference)}`)
+      const data = await response.json()
+      if (!response.ok) {
+        toast.error(data.error || 'Failed to fetch scripture')
+        return
+      }
+      setSearchResult(data)
+      toast.success('Scripture loaded!')
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to fetch scripture')
     } finally {
       setSearchLoading(false)
     }
   }
 
+  const handleAddToFavorites = async () => {
+    if (!searchResult) return
+    try {
+      const result = await addFavorite({
+        reference: searchResult.canonical,
+        verse: searchResult.passages[0],
+      })
+      if (result.error) {
+        toast.error('Failed to save favorite')
+      } else {
+        toast.success('Added to favorites!')
+        setSearchResult(null)
+        setSearchReference('')
+      }
+    } catch {
+      toast.error('Failed to save favorite')
+    }
+  }
+
   const handleRemove = async (id: string) => {
-    if (confirm('Remove this scripture from favorites?')) {
+    const confirmed = await confirm({
+      title: 'Remove Favorite?',
+      message: 'Remove this scripture from favorites?',
+      confirmText: 'Remove',
+      cancelText: 'Cancel',
+      variant: 'danger',
+    })
+    if (confirmed) {
       await removeFavorite(id)
+      toast.success('Removed from favorites')
     }
   }
 
   return (
-    <div className="flex h-screen bg-[#0a0a14] text-white overflow-hidden">
-      <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Navbar />
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-4xl mx-auto">
-            <div className="mb-6">
-              <h1 className="text-3xl font-bold text-electric mb-2">📖 Scripture</h1>
-              <p className="text-neutral-400">Search and save your favorite verses</p>
-            </div>
+    <Layout>
+      <div className="max-w-4xl mx-auto space-y-6 py-4">
+        <ConfirmDialog {...confirmDialog} />
 
-            {/* Search Bar */}
-            <Card className="mb-6">
-              <div className="flex gap-3">
-                <input
-                  type="text"
-                  value={searchReference}
-                  onChange={e => setSearchReference(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleSearch()}
-                  placeholder="Enter reference (e.g., John 3:16, Psalm 23, Romans 8:28)"
-                  className="flex-1 bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm outline-none focus:border-electric"
-                />
-                <Button
-                  variant="primary"
-                  onClick={handleSearch}
-                  disabled={searchLoading}
-                  className="text-sm"
-                >
-                  {searchLoading ? 'Searching...' : 'Search'}
-                </Button>
-              </div>
-            </Card>
+        <div className="mb-6">
+          <h1 className="heading-xl mb-2">Scripture</h1>
+          <p style={{ color: 'var(--theme-text-muted)' }} className="text-sm">Search and save your favorite verses</p>
+        </div>
 
-            {/* Favorites List */}
-            <Card title={`💙 Favorites (${favorites.length})`}>
-              {loading ? (
-                <div className="space-y-4">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="card-skeleton h-24" />
-                  ))}
-                </div>
-              ) : favorites.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-neutral-500 mb-2">No favorite scriptures yet</p>
-                  <p className="text-xs text-neutral-600">Search for verses above and save them to your favorites</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {favorites.map((fav: any) => (
-                    <div
-                      key={fav.id}
-                      className="bg-black/30 border border-white/10 rounded-lg p-4 hover:border-electric/30 transition-all"
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <h3 className="text-sm font-semibold text-electric mb-2">
-                            {fav.reference}
-                          </h3>
-                          <p className="text-neutral-300 text-sm leading-relaxed mb-3">
-                            "{fav.text}"
-                          </p>
-                          {fav.translation && (
-                            <p className="text-xs text-neutral-500">
-                              {fav.translation}
-                            </p>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => handleRemove(fav.id)}
-                          className="text-neutral-500 hover:text-red-400 transition-colors"
-                          aria-label="Remove favorite"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
-
-                      {fav.notes && (
-                        <div className="mt-3 pt-3 border-t border-white/10">
-                          <p className="text-xs text-neutral-400">{fav.notes}</p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Card>
+        <Card className="mb-6">
+          <div className="flex flex-col sm:flex-row gap-3 mb-4">
+            <input
+              type="text"
+              value={searchReference}
+              onChange={(e) => setSearchReference(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              placeholder="Enter reference (e.g., John 3:16, Psalm 23)"
+              className="input-base flex-1"
+            />
+            <Button variant="primary" onClick={handleSearch} disabled={searchLoading} className="text-sm">
+              {searchLoading ? 'Searching...' : 'Search'}
+            </Button>
           </div>
-        </main>
+
+          {searchResult && (
+            <div className="rounded-lg p-4" style={{ background: 'color-mix(in srgb, var(--theme-accent) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--theme-accent) 30%, transparent)' }}>
+              <div className="flex flex-col sm:flex-row items-start justify-between gap-3 mb-3">
+                <h3 className="text-sm font-semibold" style={{ color: 'var(--theme-accent)' }}>{searchResult.canonical}</h3>
+                <Button variant="secondary" onClick={handleAddToFavorites} className="text-xs">Add to Favorites</Button>
+              </div>
+              <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: 'var(--theme-text-dim)' }}>{searchResult.passages[0]}</p>
+              <p className="text-xs mt-3" style={{ color: 'var(--theme-text-muted)' }}>ESV - English Standard Version</p>
+            </div>
+          )}
+        </Card>
+
+        <Card title={`Favorites (${favorites.length})`}>
+          {loading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => <CardSkeleton key={i} className="h-24" />)}
+            </div>
+          ) : favorites.length === 0 ? (
+            <div className="text-center py-12">
+              <p style={{ color: 'var(--theme-text-muted)' }} className="mb-2">No favorite scriptures yet</p>
+              <p className="text-xs" style={{ color: 'var(--theme-text-muted)' }}>Search for verses above and save them</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {favorites.map((fav: any) => (
+                <div key={fav.id} className="rounded-lg p-4 transition-all" style={{ background: 'var(--theme-surface)', border: '1px solid var(--theme-border)' }}>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--theme-accent)' }}>{fav.reference}</h3>
+                      <p className="text-sm leading-relaxed mb-3 whitespace-pre-wrap" style={{ color: 'var(--theme-text-dim)' }}>&ldquo;{fav.verse}&rdquo;</p>
+                      {fav.translation && <p className="text-xs" style={{ color: 'var(--theme-text-muted)' }}>{fav.translation}</p>}
+                    </div>
+                    <button onClick={() => handleRemove(fav.id)} className="transition-colors" style={{ color: 'var(--theme-text-muted)' }} aria-label="Remove favorite">
+                      <Icons.Trash />
+                    </button>
+                  </div>
+                  {fav.notes && (
+                    <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--theme-border)' }}>
+                      <p className="text-xs" style={{ color: 'var(--theme-text-muted)' }}>{fav.notes}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
       </div>
-    </div>
+    </Layout>
   )
 }

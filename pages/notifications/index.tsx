@@ -1,58 +1,120 @@
-import Sidebar from '../../components/Sidebar'
-import Navbar from '../../components/Navbar'
+import { useEffect, useMemo, useState } from 'react'
+import Layout from '../../components/Layout'
 import Card from '../../components/Card'
 import Button from '../../components/Button'
+import VoiceInputButton from '../../components/VoiceInputButton'
 import { useNotifications } from '../../hooks/useNotifications'
-import { useState } from 'react'
+import { CardSkeleton } from '../../components/Skeleton'
+import { getGentleNudge, getNotificationReason } from '../../lib/focusEngine'
 
-export default function NotificationsPage(){
+function groupLabel(dueAt: string | null) {
+  if (!dueAt) return 'Soft queue'
+  const due = new Date(dueAt)
+  const now = new Date()
+  const diff = due.getTime() - now.getTime()
+  if (diff <= 60 * 60 * 1000) return 'Now'
+  if (diff <= 6 * 60 * 60 * 1000) return 'Later today'
+  return 'Upcoming'
+}
+
+export default function NotificationsPage() {
   const { items, loading, addNotification, updateNotification } = useNotifications()
   const [title, setTitle] = useState('')
   const [message, setMessage] = useState('')
   const [due, setDue] = useState('')
 
-  const handleAdd = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') return
+    const riskyPending = items.some((item) => item.status === 'pending' && /habit|stress|overdue/i.test(item.title))
+    if (riskyPending) {
+      navigator.vibrate([40, 30, 40])
+    }
+  }, [items])
+
+  const grouped = useMemo(() => {
+    return items.reduce<Record<string, typeof items>>((acc, item) => {
+      const key = groupLabel(item.due_at)
+      acc[key] = [...(acc[key] || []), item]
+      return acc
+    }, {})
+  }, [items])
+
+  const handleAdd = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
     if (!title) return
     await addNotification({ title, message, due_at: due || null })
-    setTitle(''); setMessage(''); setDue('')
+    setTitle('')
+    setMessage('')
+    setDue('')
+  }
+
+  const snoozeByMinutes = async (id: string, minutes: number) => {
+    const nextDue = new Date(Date.now() + minutes * 60 * 1000).toISOString()
+    await updateNotification(id, { status: 'pending', due_at: nextDue })
   }
 
   return (
-    <div className="min-h-screen flex">
-      <Sidebar />
-      <div className="flex-1">
-        <Navbar />
-        <main className="p-6 space-y-6">
-          <h1 className="text-2xl font-display font-bold">Notifications</h1>
-          <Card title="Create Reminder">
-            <form onSubmit={handleAdd} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
-              <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Reminder title" className="rounded bg-black/40 border border-white/10 px-3 py-2 text-sm" />
-              <input value={message} onChange={e=>setMessage(e.target.value)} placeholder="Message" className="rounded bg-black/40 border border-white/10 px-3 py-2 text-sm" />
-              <input type="datetime-local" value={due} onChange={e=>setDue(e.target.value)} className="rounded bg-black/40 border border-white/10 px-3 py-2 text-sm" />
-              <Button variant="primary" className="text-xs w-full md:w-auto">Schedule</Button>
-            </form>
-          </Card>
-          <Card title="Upcoming">
+    <Layout>
+      <div className="max-w-5xl mx-auto space-y-6 py-4">
+        <h1 className="heading-xl">Notifications</h1>
+
+        <Card title="Create Reminder" subtitle="Gentle prompts with context and low-friction snoozes">
+          <form onSubmit={handleAdd} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 items-end">
+            <div className="space-y-2">
+              <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Reminder title" className="input-base" />
+              <VoiceInputButton onTranscript={(text) => setTitle((current) => `${current} ${text}`.trim())} compact />
+            </div>
+            <input value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Message" className="input-base" />
+            <input type="datetime-local" value={due} onChange={(event) => setDue(event.target.value)} className="input-base" />
+            <Button variant="primary" className="text-xs w-full" type="submit">Schedule</Button>
+          </form>
+        </Card>
+
+        {Object.entries(grouped).map(([label, group]) => (
+          <Card key={label} title={label}>
             <div className="space-y-3">
-              {loading ? <div className="card-skeleton h-24"/> : items.map(item => (
-                <div key={item.id} className="flex items-center justify-between p-3 rounded-xl border border-white/10 bg-white/5">
-                  <div>
-                    <div className="font-medium">{item.title}</div>
-                    <div className="text-xs text-neutral-500">{item.due_at ? new Date(item.due_at).toLocaleString() : 'Anytime'}</div>
-                    {item.message && <div className="text-sm text-neutral-300">{item.message}</div>}
+              {loading ? (
+                <CardSkeleton className="h-24" />
+              ) : group.map((item) => (
+                <div key={item.id} className="flex flex-col gap-3 p-3 rounded-xl" style={{ border: '1px solid var(--theme-border)', background: 'var(--theme-surface)' }}>
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                    <div>
+                      <div className="font-medium" style={{ color: 'var(--theme-text)' }}>{item.title}</div>
+                      <div className="text-xs" style={{ color: 'var(--theme-text-muted)' }}>
+                        {item.due_at ? new Date(item.due_at).toLocaleString() : 'Anytime'}
+                      </div>
+                      {item.message && <div className="text-sm mt-1" style={{ color: 'var(--theme-text-dim)' }}>{item.message}</div>}
+                    </div>
+                    <div className="flex gap-2 text-xs flex-wrap">
+                      <button onClick={() => snoozeByMinutes(item.id, 15)} className="px-3 py-1 rounded" style={{ border: '1px solid var(--theme-border)' }}>Snooze 15m</button>
+                      <button onClick={() => snoozeByMinutes(item.id, 60)} className="px-3 py-1 rounded" style={{ border: '1px solid var(--theme-border)' }}>Snooze 1h</button>
+                      <button onClick={() => updateNotification(item.id, { status: 'done' })} className="btn-accent px-3 py-1 rounded">Done</button>
+                    </div>
                   </div>
-                  <div className="flex gap-2 text-xs">
-                    <button onClick={()=>updateNotification(item.id, { status: 'snoozed' })} className="px-3 py-1 rounded border border-white/10">Snooze</button>
-                    <button onClick={()=>updateNotification(item.id, { status: 'done' })} className="btn-glow px-3 py-1 rounded">Done</button>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                    <div className="rounded-lg p-3" style={{ background: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
+                      <p className="uppercase tracking-wide mb-1" style={{ color: 'var(--theme-text-muted)' }}>Why now?</p>
+                      <p style={{ color: 'var(--theme-text-dim)' }}>{getNotificationReason(item.title, item.due_at)}</p>
+                    </div>
+                    <div className="rounded-lg p-3" style={{ background: 'rgba(20, 184, 166, 0.08)', border: '1px solid rgba(20, 184, 166, 0.2)' }}>
+                      <p className="uppercase tracking-wide mb-1" style={{ color: 'var(--theme-text-muted)' }}>Gentle poke</p>
+                      <p style={{ color: 'var(--theme-text-dim)' }}>{getGentleNudge(item.title)}</p>
+                    </div>
                   </div>
                 </div>
               ))}
-              {(!loading && items.length === 0) && <div className="subtle-muted">Nothing scheduled.</div>}
+              {!loading && group.length === 0 && <div className="subtle-muted text-sm">Nothing scheduled.</div>}
             </div>
           </Card>
-        </main>
+        ))}
+
+        {!loading && items.length === 0 && (
+          <Card>
+            <div className="subtle-muted text-sm">Nothing scheduled.</div>
+          </Card>
+        )}
       </div>
-    </div>
+    </Layout>
   )
 }

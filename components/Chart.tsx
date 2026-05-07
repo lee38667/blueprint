@@ -11,6 +11,15 @@ import {
   ScriptableContext
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import { useRef } from 'react';
+
+function resolveColor(color: string): string {
+  if (typeof window === 'undefined') return color
+  const match = color.match(/^var\(--([^)]+)\)$/)
+  if (!match) return color
+  const value = getComputedStyle(document.documentElement).getPropertyValue(`--${match[1]}`).trim()
+  return value || color
+}
 
 ChartJS.register(
   CategoryScale,
@@ -46,6 +55,9 @@ export default function ChartComponent({
   yAxisLabel = '',
   legendPosition = 'top'
 }: ChartProps) {
+  const chartRef = useRef<ChartJS<'line'> | null>(null)
+  const resolved = resolveColor(color)
+
   const options: any = {
     responsive: true,
     maintainAspectRatio: false,
@@ -130,19 +142,19 @@ export default function ChartComponent({
     datasets: [
       {
         data,
-        borderColor: color,
+        borderColor: resolved,
         backgroundColor: (context: ScriptableContext<'line'>) => {
           const ctx = context.chart.ctx;
           const gradient = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
-          gradient.addColorStop(0, `${color}33`); // ~20% opacity
-          gradient.addColorStop(1, `${color}00`); // 0% opacity
+          gradient.addColorStop(0, `${resolved}33`);
+          gradient.addColorStop(1, `${resolved}00`);
           return gradient;
         },
         borderWidth: 2,
         pointRadius: 0,
         pointHoverRadius: 4,
         pointBackgroundColor: '#000',
-        pointBorderColor: color,
+        pointBorderColor: resolved,
         pointBorderWidth: 2,
         fill: true,
         tension: 0.4,
@@ -152,7 +164,7 @@ export default function ChartComponent({
 
   return (
     <div style={{ height: height, width: '100%' }}>
-      <Line options={options} data={chartData} />
+      <Line ref={chartRef} options={options} data={chartData} />
     </div>
   );
 }

@@ -24,6 +24,31 @@ module.exports = {
 				900: '#171717',
 				950: '#0A0A0A',
 			},
+			/* Semantic colors matching CSS variables */
+			success: {
+				DEFAULT: '#22c55e',
+				dim: '#16a34a',
+				surface: 'rgba(34, 197, 94, 0.1)',
+				border: 'rgba(34, 197, 94, 0.25)',
+			},
+			error: {
+				DEFAULT: '#ef4444',
+				dim: '#dc2626',
+				surface: 'rgba(239, 68, 68, 0.1)',
+				border: 'rgba(239, 68, 68, 0.25)',
+			},
+			warning: {
+				DEFAULT: '#f59e0b',
+				dim: '#d97706',
+				surface: 'rgba(245, 158, 11, 0.1)',
+				border: 'rgba(245, 158, 11, 0.25)',
+			},
+			info: {
+				DEFAULT: '#3b82f6',
+				dim: '#2563eb',
+				surface: 'rgba(59, 130, 246, 0.1)',
+				border: 'rgba(59, 130, 246, 0.25)',
+			},
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {

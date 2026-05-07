@@ -1,5 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { supabaseWithRetry } from '../lib/retry'
+import { handleError } from '../lib/errors'
+import { useToastStore } from '../lib/toastStore'
+import type { AISnapshot } from '../lib/aiSnapshot'
 
 export interface Notification {
   id: string
@@ -10,39 +14,92 @@ export interface Notification {
   created_at: string
 }
 
-export function useNotifications(){
+export function useNotifications() {
   const [items, setItems] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const toast = useToastStore()
 
-  useEffect(()=>{
-    let mounted = true
-    const load = async ()=>{
-      setLoading(true)
-      const { data } = await supabase.from('notifications').select('id,title,message,due_at,status,created_at').order('created_at', { ascending: false })
-      if (!mounted) return
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const { data } = await supabaseWithRetry(() =>
+        supabase.from('notifications').select('id,title,message,due_at,status,created_at').order('created_at', { ascending: false })
+      )
       setItems((data ?? []) as Notification[])
+      setError(null)
+    } catch (err) {
+      handleError(err, { fallback: 'Failed to load notifications', setError, toast })
+    } finally {
       setLoading(false)
     }
-    load()
-    return ()=>{ mounted = false }
-  },[])
+  }, [toast])
 
-  const addNotification = async (payload: Partial<Notification>) => {
-    const { error } = await supabase.from('notifications').insert({
-      title: payload.title,
-      message: payload.message ?? null,
-      due_at: payload.due_at ?? null,
-      status: payload.status ?? 'pending'
-    })
-    if (error) throw error
+  useEffect(() => {
+    load()
+  }, [load])
+
+  const addNotification = async (payload: Partial<Notification>, options?: { silent?: boolean }) => {
+    try {
+      setError(null)
+      await supabaseWithRetry(() => supabase.from('notifications').insert({
+        title: payload.title,
+        message: payload.message ?? null,
+        due_at: payload.due_at ?? null,
+        status: payload.status ?? 'pending'
+      }))
+      if (!options?.silent) {
+        toast.success('Notification created')
+      }
+      await load()
+    } catch (err) {
+      handleError(err, { fallback: 'Failed to create notification', setError, toast })
+    }
   }
 
   const updateNotification = async (id: string, patch: Partial<Notification>) => {
-    const { error } = await supabase.from('notifications').update(patch).eq('id', id)
-    if (error) throw error
+    try {
+      setError(null)
+      await supabaseWithRetry(() => supabase.from('notifications').update(patch).eq('id', id))
+      toast.success('Notification updated')
+      await load()
+    } catch (err) {
+      handleError(err, { fallback: 'Failed to update notification', setError, toast })
+    }
   }
 
-  return { items, loading, addNotification, updateNotification }
+  const pendingCount = useMemo(() => items.filter((item) => item.status === 'pending').length, [items])
+
+  const evaluateAndInsert = useCallback(async (snapshot: AISnapshot, habitData?: { habits: any[]; logs: any[] }) => {
+    try {
+      const res = await fetch('/api/notifications/evaluate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ snapshot, habits: habitData })
+      })
+      const data = await res.json()
+      if (!res.ok || !data.notifications) return
+
+      const today = new Date().toISOString().slice(0, 10)
+      const todaysItems = items.filter((item) => item.created_at?.slice(0, 10) === today)
+
+      for (const notification of data.notifications) {
+        const alreadyExists = todaysItems.some((existing) => existing.title === notification.title)
+        if (!alreadyExists) {
+          await supabaseWithRetry(() => supabase.from('notifications').insert({
+            title: notification.title,
+            message: notification.message,
+            status: 'pending'
+          }))
+        }
+      }
+      await load()
+    } catch {
+      // Silent failure to avoid disrupting the user
+    }
+  }, [items, load])
+
+  return { items, loading, error, pendingCount, addNotification, updateNotification, evaluateAndInsert, refresh: load }
 }
 
 export default useNotifications

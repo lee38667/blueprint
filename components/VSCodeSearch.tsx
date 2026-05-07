@@ -1,5 +1,4 @@
-// @ts-nocheck
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Fuse from 'fuse.js'
 import { useRouter } from 'next/router'
@@ -7,18 +6,30 @@ import { useTasks } from '../hooks/useTasks'
 import { useGoals } from '../hooks/useGoals'
 import { useNotes } from '../hooks/useNotes'
 import { useScriptureFavorites } from '../hooks/useScriptureFavorites'
+import { Icons } from './icons'
 
-export default function VSCodeSearch({ onClose }: { onClose?: ()=>void }){
+interface SearchItem {
+  id: string
+  title: string
+  subtitle?: string
+  type: string
+  href?: string
+}
+
+export default function VSCodeSearch({ onClose }: { onClose?: () => void }) {
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<any[]>([])
-  const [filter, setFilter] = useState<'all'|'pages'|'tasks'|'goals'|'notes'|'scripture'>('all')
+  const [results, setResults] = useState<SearchItem[]>([])
+  const [filter, setFilter] = useState<'all' | 'pages' | 'tasks' | 'goals' | 'notes' | 'scripture'>('all')
+  const [selectedIndex, setSelectedIndex] = useState(0)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const { tasks } = useTasks()
   const { goals } = useGoals()
   const { notes } = useNotes()
   const { favorites } = useScriptureFavorites()
 
-  const baseItems = [
+  const baseItems: SearchItem[] = [
     { id: '/dashboard', title: 'Dashboard', type: 'Page' },
     { id: '/notes', title: 'Notes', type: 'Page' },
     { id: '/life-areas', title: 'Life Areas', type: 'Page' },
@@ -34,29 +45,29 @@ export default function VSCodeSearch({ onClose }: { onClose?: ()=>void }){
     { id: '/settings', title: 'Settings', type: 'Page' }
   ]
 
-  const dataset = useMemo(()=>{
-    const taskItems = tasks.map(t => ({
+  const dataset = useMemo(() => {
+    const taskItems: SearchItem[] = tasks.map(t => ({
       id: `task-${t.id}`,
       title: t.title,
       subtitle: `${t.project ?? 'General'} • ${t.priority}`,
       type: 'Task',
       href: '/tasks'
     }))
-    const goalItems = goals.map(g => ({
+    const goalItems: SearchItem[] = goals.map(g => ({
       id: `goal-${g.id}`,
       title: g.title,
       subtitle: g.category ?? 'Goal',
       type: 'Goal',
       href: '/goals'
     }))
-    const noteItems = notes.map(n => ({
+    const noteItems: SearchItem[] = notes.map(n => ({
       id: `note-${n.id}`,
       title: n.title ?? 'Untitled Note',
-      subtitle: n.content?.slice(0,40) ?? '',
+      subtitle: n.content?.slice(0, 40) ?? '',
       type: 'Note',
       href: '/notes'
     }))
-    const scriptureItems = favorites.map(f => ({
+    const scriptureItems: SearchItem[] = favorites.map(f => ({
       id: `scripture-${f.id}`,
       title: f.reference,
       subtitle: f.verse.slice(0, 60),
@@ -66,48 +77,88 @@ export default function VSCodeSearch({ onClose }: { onClose?: ()=>void }){
     return [...baseItems, ...taskItems, ...goalItems, ...noteItems, ...scriptureItems]
   }, [tasks, goals, notes, favorites])
 
-  useEffect(()=>{
+  useEffect(() => {
     const fuse = new Fuse(dataset, { keys: ['title', 'subtitle'], threshold: 0.3 })
     const filteredDataset = filter === 'all' ? dataset : dataset.filter(item => {
-      const map: Record<string,string> = { pages: 'Page', tasks: 'Task', goals: 'Goal', notes: 'Note', scripture: 'Scripture' }
+      const map: Record<string, string> = { pages: 'Page', tasks: 'Task', goals: 'Goal', notes: 'Note', scripture: 'Scripture' }
       return item.type === map[filter]
     })
     if (!query) {
-        setResults(filteredDataset)
-        return
+      setResults(filteredDataset)
+      return
     }
-    const r = fuse.search(query).map(x=>x.item).filter(item => filteredDataset.includes(item))
+    const r = fuse.search(query).map(x => x.item).filter(item => filteredDataset.includes(item))
     setResults(r)
+    setSelectedIndex(0)
   }, [query, dataset, filter])
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setSelectedIndex(i => Math.min(i + 1, results.length - 1))
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setSelectedIndex(i => Math.max(i - 1, 0))
+      } else if (e.key === 'Enter' && results[selectedIndex]) {
+        e.preventDefault()
+        handleSelect(results[selectedIndex].id)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [results, selectedIndex])
+
+  // Scroll selected item into view
+  useEffect(() => {
+    const el = listRef.current?.children[selectedIndex] as HTMLElement
+    el?.scrollIntoView({ block: 'nearest' })
+  }, [selectedIndex])
 
   const handleSelect = (id: string) => {
     const target = results.find(r => r.id === id)
     router.push(target?.href ?? target?.id ?? id)
-    if(onClose) onClose()
+    if (onClose) onClose()
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh] bg-black/50 backdrop-blur-xl" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh]"
+      style={{ background: 'rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Search"
+    >
       <motion.div
         initial={{ scale: 0.98, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.98, opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="w-full max-w-2xl panel-glass border border-white/10 rounded-2xl shadow-panel overflow-hidden flex flex-col"
+        className="w-full max-w-2xl panel-glass overflow-hidden flex flex-col"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex gap-3 items-center p-4 border-b border-white/5">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-electric"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          <input 
-            autoFocus 
-            value={query} 
-            onChange={(e)=>setQuery(e.target.value)} 
-            placeholder="Type a command or search..." 
-            className="flex-1 bg-transparent text-white placeholder-neutral-500 outline-none font-sans text-lg" 
+        <div className="flex gap-3 items-center p-4" style={{ borderBottom: '1px solid var(--theme-border)' }}>
+          <Icons.Search style={{ color: 'var(--theme-accent)' }} />
+          <input
+            ref={inputRef}
+            autoFocus
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Type a command or search..."
+            className="flex-1 bg-transparent outline-none font-sans text-lg"
+            style={{ color: 'var(--theme-text)' }}
+            aria-label="Search input"
           />
-          <div className="text-xs text-neutral-500 bg-white/5 px-2 py-1 rounded border border-white/5">ESC</div>
+          <div
+            className="text-xs px-2 py-1 rounded"
+            style={{ color: 'var(--theme-text-muted)', background: 'var(--theme-surface)', border: '1px solid var(--theme-border)' }}
+          >
+            ESC
+          </div>
         </div>
-        <div className="flex gap-2 px-4 py-2 border-b border-white/5 text-xs text-neutral-400">
+        <div className="flex gap-2 px-4 py-2 text-xs" style={{ borderBottom: '1px solid var(--theme-border)' }}>
           {[
             { key: 'all', label: 'All' },
             { key: 'pages', label: 'Pages' },
@@ -118,40 +169,48 @@ export default function VSCodeSearch({ onClose }: { onClose?: ()=>void }){
           ].map(opt => (
             <button
               key={opt.key}
-              onClick={() => setFilter(opt.key as any)}
-              className={`px-3 py-1 rounded-full border ${filter===opt.key ? 'border-electric text-electric' : 'border-white/5 hover:border-white/20'}`}
+              onClick={() => setFilter(opt.key as typeof filter)}
+              className="px-3 py-1 rounded-full transition-colors"
+              style={{
+                border: filter === opt.key ? '1px solid var(--theme-accent)' : '1px solid var(--theme-border)',
+                color: filter === opt.key ? 'var(--theme-accent)' : 'var(--theme-text-muted)',
+              }}
             >
               {opt.label}
             </button>
           ))}
         </div>
-        <div className="max-h-[60vh] overflow-y-auto p-2 no-scrollbar">
+        <div ref={listRef} className="max-h-[60vh] overflow-y-auto p-2 no-scrollbar" role="listbox">
           {results.length === 0 && query && (
-            <div className="p-4 text-center text-neutral-500">No results found.</div>
+            <div className="p-4 text-center" style={{ color: 'var(--theme-text-muted)' }}>No results found.</div>
           )}
           {results.map((r, i) => (
-            <motion.div 
-              key={r.id} 
+            <div
+              key={r.id}
               onClick={() => handleSelect(r.id)}
-              className="flex items-center justify-between p-3 hover:bg-white/5 rounded-xl cursor-pointer group transition-colors"
-              whileHover={{ x: 2 }}
+              role="option"
+              aria-selected={i === selectedIndex}
+              className="flex items-center justify-between p-3 rounded-xl cursor-pointer group transition-colors"
+              style={{
+                background: i === selectedIndex ? 'var(--theme-surface)' : 'transparent',
+              }}
             >
               <div className="flex items-center gap-3">
-                <span className="text-neutral-500 group-hover:text-electric transition-colors">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                <span style={{ color: i === selectedIndex ? 'var(--theme-accent)' : 'var(--theme-text-muted)' }} className="transition-colors">
+                  <Icons.File size="sm" />
                 </span>
                 <div>
-                  <div className="font-medium">{r.title}</div>
-                  {r.subtitle && <div className="text-xs text-neutral-500">{r.subtitle}</div>}
+                  <div className="font-medium" style={{ color: 'var(--theme-text)' }}>{r.title}</div>
+                  {r.subtitle && <div className="text-xs" style={{ color: 'var(--theme-text-muted)' }}>{r.subtitle}</div>}
                 </div>
               </div>
-              <span className="text-xs text-neutral-600 group-hover:text-electric/70 uppercase tracking-wider">{r.type}</span>
-            </motion.div>
+              <span className="text-xs uppercase tracking-wider" style={{ color: 'var(--theme-text-muted)' }}>{r.type}</span>
+            </div>
           ))}
         </div>
-        <div className="p-2 border-t border-white/5 bg-black/20 text-xs text-neutral-500 flex justify-between px-4">
-          <span>Select</span>
-          <span>↵ Enter</span>
+        <div className="p-2 px-4 flex justify-between text-xs" style={{ borderTop: '1px solid var(--theme-border)', background: 'var(--theme-surface)', color: 'var(--theme-text-muted)' }}>
+          <span>Navigate with ↑↓ • Select with ↵</span>
+          <span>ESC to close</span>
         </div>
       </motion.div>
     </div>

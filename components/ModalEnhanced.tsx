@@ -1,5 +1,4 @@
-// @ts-nocheck
-import { ReactNode } from 'react'
+import { ReactNode, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface ModalProps {
@@ -12,11 +11,25 @@ interface ModalProps {
 }
 
 export function Modal({ isOpen, onClose, title, children, actions, size = 'md' }: ModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+
   const sizeClasses = {
     sm: 'max-w-md',
     md: 'max-w-lg',
     lg: 'max-w-2xl'
   }
+
+  // Focus trap + escape key
+  useEffect(() => {
+    if (!isOpen) return
+    dialogRef.current?.focus()
+
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [isOpen, onClose])
 
   return (
     <AnimatePresence>
@@ -28,40 +41,45 @@ export function Modal({ isOpen, onClose, title, children, actions, size = 'md' }
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+            className="modal-backdrop"
           />
 
           {/* Modal */}
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
+              ref={dialogRef}
+              tabIndex={-1}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="modal-title"
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ duration: 0.2 }}
-              className={`bg-[#1a1a2e] border border-white/10 rounded-xl shadow-2xl w-full ${sizeClasses[size]} overflow-hidden`}
+              className={`modal-panel w-full ${sizeClasses[size]} overflow-hidden`}
             >
               {/* Header */}
-              <div className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-electric">{title}</h2>
+              <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--theme-border)' }}>
+                <h2 id="modal-title" className="text-xl font-semibold" style={{ color: 'var(--theme-accent)' }}>{title}</h2>
                 <button
                   onClick={onClose}
-                  className="text-neutral-400 hover:text-white transition-colors"
+                  className="btn-ghost p-1.5 rounded-lg"
                   aria-label="Close modal"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
 
               {/* Content */}
-              <div className="px-6 py-4 text-neutral-300 max-h-[60vh] overflow-y-auto">
+              <div className="px-6 py-4 max-h-[60vh] overflow-y-auto text-body">
                 {children}
               </div>
 
               {/* Actions */}
               {actions && (
-                <div className="border-t border-white/10 px-6 py-4 flex items-center justify-end gap-3">
+                <div className="px-6 py-4 flex items-center justify-end gap-3" style={{ borderTop: '1px solid var(--theme-border)' }}>
                   {actions}
                 </div>
               )}
@@ -111,25 +129,21 @@ export function ConfirmDialog({
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="px-4 py-2 rounded-lg border border-white/10 text-neutral-300 hover:border-white/30 hover:text-white transition-all disabled:opacity-50"
+            className="btn-outline disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={handleConfirm}
             disabled={isLoading}
-            className={`px-4 py-2 rounded-lg font-medium transition-all disabled:opacity-50 ${
-              confirmVariant === 'danger'
-                ? 'bg-red-500 text-white hover:bg-red-600'
-                : 'bg-electric text-black hover:bg-electric/90'
-            }`}
+            className={`${confirmVariant === 'danger' ? 'btn-danger' : 'btn-accent'} disabled:opacity-50`}
           >
             {isLoading ? 'Processing...' : confirmText}
           </button>
         </>
       }
     >
-      <p className="text-neutral-300">{message}</p>
+      <p className="text-body">{message}</p>
     </Modal>
   )
 }

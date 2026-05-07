@@ -3,32 +3,60 @@ import { ReactNode } from 'react'
 interface ButtonProps {
   children: ReactNode
   onClick?: () => void
-  variant?: 'primary' | 'secondary' | 'outline'
+  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost'
+  size?: 'sm' | 'md' | 'lg'
   className?: string
   disabled?: boolean
+  loading?: boolean
   type?: 'button' | 'submit' | 'reset'
+  icon?: ReactNode
+  iconPosition?: 'left' | 'right'
 }
 
-export default function Button({ children, onClick, variant = 'primary', className = '', disabled = false, type = 'button' }: ButtonProps){
-  const baseStyles = "px-5 py-2.5 rounded-lg font-medium transition-all duration-300 flex items-center justify-center tracking-wide font-sans text-sm"
-  
-  const variants = {
-    primary: "bg-electric text-black hover:bg-electric/90 hover:shadow-[0_0_15px_rgba(0,229,255,0.5)] hover:scale-[1.02]",
-    secondary: "bg-neon text-white hover:bg-neon/90 hover:shadow-[0_0_15px_rgba(179,0,255,0.5)] hover:scale-[1.02]",
-    outline: "border border-white/20 text-minimal-white hover:border-electric hover:text-electric hover:bg-electric/5"
+export default function Button({
+  children,
+  onClick,
+  variant = 'primary',
+  size = 'md',
+  className = '',
+  disabled = false,
+  loading = false,
+  type = 'button',
+  icon,
+  iconPosition = 'left',
+}: ButtonProps) {
+  const isDisabled = disabled || loading
+
+  const variantClasses: Record<string, string> = {
+    primary: 'btn-accent',
+    secondary: 'btn-secondary',
+    outline: 'btn-outline',
+    danger: 'btn-danger',
+    ghost: 'btn-ghost',
   }
 
-  const disabledStyles = disabled ? 'opacity-50 cursor-not-allowed hover:scale-100 hover:shadow-none' : ''
+  const sizeClasses: Record<string, string> = {
+    sm: 'btn-sm',
+    md: '',
+    lg: 'btn-lg',
+  }
 
   return (
-    <button 
-      onClick={onClick} 
-      disabled={disabled}
+    <button
+      onClick={onClick}
+      disabled={isDisabled}
       type={type}
-      className={`${baseStyles} ${variants[variant]} ${disabledStyles} ${className}`}
+      className={`${variantClasses[variant]} ${sizeClasses[size]} ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
     >
-      {children}
+      {loading && (
+        <svg className="animate-spin h-4 w-4 flex-shrink-0" viewBox="0 0 24 24" fill="none">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+      )}
+      {!loading && icon && iconPosition === 'left' && <span className="flex-shrink-0">{icon}</span>}
+      <span>{children}</span>
+      {!loading && icon && iconPosition === 'right' && <span className="flex-shrink-0">{icon}</span>}
     </button>
   )
 }
-

@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { supabaseWithRetry } from '../lib/retry'
+import { handleError } from '../lib/errors'
+import { useToastStore } from '../lib/toastStore'
 
 interface DashboardData {
   balance: number
@@ -12,6 +15,8 @@ interface DashboardData {
 export function useDashboard(){
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<DashboardData | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const toast = useToastStore()
 
   useEffect(()=>{
     let mounted = true
@@ -19,14 +24,14 @@ export function useDashboard(){
       setLoading(true)
       try{
         const [{ data: summary }, { data: history }, { data: logs }] = await Promise.all([
-          supabase.from('finance_summary').select('*').maybeSingle(),
-          supabase.from('finance_history').select('recorded_at,balance').order('recorded_at', { ascending: true }),
-          supabase.from('workout_logs').select('performed_at,metrics').order('performed_at', { ascending: true })
+          supabaseWithRetry(() => supabase.from('finance_summary').select('*').maybeSingle()) as Promise<{ data: any; error: any }>,
+          supabaseWithRetry(() => supabase.from('finance_history').select('recorded_at,balance').order('recorded_at', { ascending: true })),
+          supabaseWithRetry(() => supabase.from('workout_logs').select('performed_at,metrics').order('performed_at', { ascending: true }))
         ])
 
         if (!mounted) return
 
-        const balance = summary?.balance ?? 0
+        const balance = (summary?.balance as number) ?? 0
 
         const hist = (history ?? []) as { recorded_at: string; balance: number }[]
         const balanceHistory = hist.map(h => h.balance)
@@ -50,8 +55,12 @@ export function useDashboard(){
           weightHistory,
           weightLabels
         })
+        setError(null)
       }catch(e){
-        if (mounted) setData(null)
+        if (mounted) {
+          handleError(e, { fallback: 'Failed to load dashboard data', setError, toast })
+          setData(null)
+        }
       }
       setLoading(false)
     }
@@ -59,7 +68,7 @@ export function useDashboard(){
     return ()=>{ mounted = false }
   },[])
 
-  return { loading, data }
+  return { loading, data, error }
 }
 
 export default useDashboard

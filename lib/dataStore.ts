@@ -1,5 +1,8 @@
 import { create } from 'zustand'
 import { supabase } from './supabaseClient'
+import { supabaseWithRetry } from './retry'
+import { handleError } from './errors'
+import { useToastStore } from './toastStore'
 import type {
   Task,
   Goal,
@@ -12,7 +15,9 @@ import type {
   MoodLog,
   BodyStat,
   NoteEntry,
-  DocumentItem
+  DocumentItem,
+  Habit,
+  HabitLog
 } from '../types/models'
 
 // Centralized cache for Supabase-backed modules.
@@ -59,6 +64,12 @@ interface DataStore {
   documentsLoading: boolean
   documentsLoaded: boolean
   fetchDocuments: () => Promise<void>
+
+  habits: Habit[]
+  habitLogs: HabitLog[]
+  habitsLoading: boolean
+  habitsLoaded: boolean
+  fetchHabits: () => Promise<void>
 }
 
 export const useDataStore = create<DataStore>((set, get) => ({
@@ -68,11 +79,20 @@ export const useDataStore = create<DataStore>((set, get) => ({
   fetchTasks: async () => {
     if (get().tasksLoading) return
     set({ tasksLoading: true })
-    const { data } = await supabase
-      .from('tasks')
-      .select('id,title,description,priority,status,project,due_date,created_at')
-      .order('created_at', { ascending: false })
-    set({ tasks: (data ?? []) as Task[], tasksLoading: false, tasksLoaded: true })
+    const toast = useToastStore.getState()
+    try {
+      const { data } = await supabaseWithRetry(() =>
+        supabase
+          .from('tasks')
+          .select('id,title,description,priority,status,project,due_date,goal_id,created_at')
+          .order('created_at', { ascending: false })
+      )
+
+      set({ tasks: (data ?? []) as Task[], tasksLoading: false, tasksLoaded: true })
+    } catch (error) {
+      handleError(error, { toast, context: 'fetchTasks' })
+      set({ tasksLoading: false, tasksLoaded: false })
+    }
   },
 
   goals: [],
@@ -83,18 +103,24 @@ export const useDataStore = create<DataStore>((set, get) => ({
   fetchGoalsBundle: async () => {
     if (get().goalsLoading) return
     set({ goalsLoading: true })
-    const [goalsRes, msRes, stRes] = await Promise.all([
-      supabase.from('goals').select('id,title,category,target_date,status,progress_note').order('created_at', { ascending: false }),
-      supabase.from('goals_milestones').select('id,goal_id,title,due_date,status,created_at').order('created_at', { ascending: false }),
-      supabase.from('goals_subtasks').select('id,milestone_id,title,status,created_at').order('created_at', { ascending: false })
-    ])
-    set({
-      goals: (goalsRes.data ?? []) as Goal[],
-      milestones: (msRes.data ?? []) as Milestone[],
-      subtasks: (stRes.data ?? []) as Subtask[],
-      goalsLoading: false,
-      goalsLoaded: true
-    })
+    const toast = useToastStore.getState()
+    try {
+      const [goalsRes, msRes, stRes] = await Promise.all([
+        supabaseWithRetry(() => supabase.from('goals').select('id,title,category,target_date,status,progress_note').order('created_at', { ascending: false })),
+        supabaseWithRetry(() => supabase.from('goals_milestones').select('id,goal_id,title,due_date,status,created_at').order('created_at', { ascending: false })),
+        supabaseWithRetry(() => supabase.from('goals_subtasks').select('id,milestone_id,title,status,created_at').order('created_at', { ascending: false }))
+      ])
+      set({
+        goals: (goalsRes.data ?? []) as Goal[],
+        milestones: (msRes.data ?? []) as Milestone[],
+        subtasks: (stRes.data ?? []) as Subtask[],
+        goalsLoading: false,
+        goalsLoaded: true
+      })
+    } catch (error) {
+      handleError(error, { toast, context: 'fetchGoalsBundle' })
+      set({ goalsLoading: false, goalsLoaded: false })
+    }
   },
 
   financeSummary: null,
@@ -106,20 +132,26 @@ export const useDataStore = create<DataStore>((set, get) => ({
   fetchFinance: async () => {
     if (get().financeLoading) return
     set({ financeLoading: true })
-    const [summaryRes, historyRes, logsRes, targetsRes] = await Promise.all([
-      supabase.from('finance_summary').select('*').maybeSingle(),
-      supabase.from('finance_history').select('recorded_at,balance,delta,note').order('recorded_at'),
-      supabase.from('finance_logs').select('id,recorded_at,type,amount,category,note').order('recorded_at', { ascending: false }),
-      supabase.from('savings_targets').select('id,month,target_amount').order('month')
-    ])
-    set({
-      financeSummary: (summaryRes.data ?? null) as FinanceSummary | null,
-      financeHistory: (historyRes.data ?? []) as FinanceHistoryEntry[],
-      financeLogs: (logsRes.data ?? []) as FinanceLog[],
-      savingsTargets: (targetsRes.data ?? []) as SavingsTarget[],
-      financeLoading: false,
-      financeLoaded: true
-    })
+    const toast = useToastStore.getState()
+    try {
+      const [summaryRes, historyRes, logsRes, targetsRes] = await Promise.all([
+        supabaseWithRetry(() => supabase.from('finance_summary').select('*').maybeSingle()),
+        supabaseWithRetry(() => supabase.from('finance_history').select('recorded_at,balance,delta,note').order('recorded_at')),
+        supabaseWithRetry(() => supabase.from('finance_logs').select('id,recorded_at,type,amount,category,note').order('recorded_at', { ascending: false })),
+        supabaseWithRetry(() => supabase.from('savings_targets').select('id,month,target_amount').order('month'))
+      ])
+      set({
+        financeSummary: (summaryRes.data ?? null) as FinanceSummary | null,
+        financeHistory: (historyRes.data ?? []) as FinanceHistoryEntry[],
+        financeLogs: (logsRes.data ?? []) as FinanceLog[],
+        savingsTargets: (targetsRes.data ?? []) as SavingsTarget[],
+        financeLoading: false,
+        financeLoaded: true
+      })
+    } catch (error) {
+      handleError(error, { toast, context: 'fetchFinance' })
+      set({ financeLoading: false, financeLoaded: false })
+    }
   },
 
   moodLogs: [],
@@ -128,11 +160,19 @@ export const useDataStore = create<DataStore>((set, get) => ({
   fetchMoodLogs: async () => {
     if (get().moodLoading) return
     set({ moodLoading: true })
-    const { data } = await supabase
-      .from('mood_logs')
-      .select('id,mood_label,mood_score,stress_score,note,created_at')
-      .order('created_at', { ascending: true })
-    set({ moodLogs: (data ?? []) as MoodLog[], moodLoading: false, moodLoaded: true })
+    const toast = useToastStore.getState()
+    try {
+      const { data } = await supabaseWithRetry(() =>
+        supabase
+          .from('mood_logs')
+          .select('id,mood_label,mood_score,stress_score,note,created_at')
+          .order('created_at', { ascending: true })
+      )
+      set({ moodLogs: (data ?? []) as MoodLog[], moodLoading: false, moodLoaded: true })
+    } catch (error) {
+      handleError(error, { toast, context: 'fetchMoodLogs' })
+      set({ moodLoading: false, moodLoaded: false })
+    }
   },
 
   bodyStats: [],
@@ -141,11 +181,19 @@ export const useDataStore = create<DataStore>((set, get) => ({
   fetchBodyStats: async () => {
     if (get().bodyLoading) return
     set({ bodyLoading: true })
-    const { data } = await supabase
-      .from('body_stats')
-      .select('id,recorded_at,weight,sleep_hours,water_ml,stress')
-      .order('recorded_at')
-    set({ bodyStats: (data ?? []) as BodyStat[], bodyLoading: false, bodyLoaded: true })
+    const toast = useToastStore.getState()
+    try {
+      const { data } = await supabaseWithRetry(() =>
+        supabase
+          .from('body_stats')
+          .select('id,recorded_at,weight,sleep_hours,water_ml,stress')
+          .order('recorded_at')
+      )
+      set({ bodyStats: (data ?? []) as BodyStat[], bodyLoading: false, bodyLoaded: true })
+    } catch (error) {
+      handleError(error, { toast, context: 'fetchBodyStats' })
+      set({ bodyLoading: false, bodyLoaded: false })
+    }
   },
 
   notes: [],
@@ -154,8 +202,16 @@ export const useDataStore = create<DataStore>((set, get) => ({
   fetchNotes: async () => {
     if (get().notesLoading) return
     set({ notesLoading: true })
-    const { data } = await supabase.from('notes').select('*').order('updated_at', { ascending: false })
-    set({ notes: (data ?? []) as NoteEntry[], notesLoading: false, notesLoaded: true })
+    const toast = useToastStore.getState()
+    try {
+      const { data } = await supabaseWithRetry(() =>
+        supabase.from('notes').select('*').order('updated_at', { ascending: false })
+      )
+      set({ notes: (data ?? []) as NoteEntry[], notesLoading: false, notesLoaded: true })
+    } catch (error) {
+      handleError(error, { toast, context: 'fetchNotes' })
+      set({ notesLoading: false, notesLoaded: false })
+    }
   },
 
   documents: [],
@@ -164,10 +220,47 @@ export const useDataStore = create<DataStore>((set, get) => ({
   fetchDocuments: async () => {
     if (get().documentsLoading) return
     set({ documentsLoading: true })
-    const { data } = await supabase
-      .from('content')
-      .select('id,title,type,metadata,created_at')
-      .order('created_at', { ascending: false })
-    set({ documents: (data ?? []) as DocumentItem[], documentsLoading: false, documentsLoaded: true })
+    const toast = useToastStore.getState()
+    try {
+      const { data } = await supabaseWithRetry(() =>
+        supabase
+          .from('content')
+          .select('id,title,type,metadata,created_at')
+          .order('created_at', { ascending: false })
+      )
+      set({ documents: (data ?? []) as DocumentItem[], documentsLoading: false, documentsLoaded: true })
+    } catch (error) {
+      handleError(error, { toast, context: 'fetchDocuments' })
+      set({ documentsLoading: false, documentsLoaded: false })
+    }
+  },
+
+  habits: [],
+  habitLogs: [],
+  habitsLoading: false,
+  habitsLoaded: false,
+  fetchHabits: async () => {
+    if (get().habitsLoading) return
+    set({ habitsLoading: true })
+    const toast = useToastStore.getState()
+    try {
+      const [habitsRes, logsRes] = await Promise.all([
+        supabaseWithRetry(() =>
+          supabase.from('habits').select('id,name,frequency,created_at').order('created_at', { ascending: false })
+        ),
+        supabaseWithRetry(() =>
+          supabase.from('habit_logs').select('id,habit_id,logged_at,completed').order('logged_at', { ascending: false })
+        )
+      ])
+      set({
+        habits: (habitsRes.data ?? []) as Habit[],
+        habitLogs: (logsRes.data ?? []) as HabitLog[],
+        habitsLoading: false,
+        habitsLoaded: true
+      })
+    } catch (error) {
+      handleError(error, { toast, context: 'fetchHabits' })
+      set({ habitsLoading: false, habitsLoaded: false })
+    }
   }
 }))

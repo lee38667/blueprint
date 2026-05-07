@@ -41,6 +41,18 @@ create table if not exists workout_logs (
   notes text
 );
 
+create table if not exists calendar_connections (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) not null,
+  provider text not null default 'google',
+  access_token text not null,
+  refresh_token text,
+  expires_at timestamptz,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  unique(user_id, provider)
+);
+
 create table if not exists finance_summary (
   id uuid default gen_random_uuid() primary key,
   user_id uuid references auth.users(id) not null,
@@ -129,11 +141,32 @@ create table if not exists scripture_favorites (
 
 create table if not exists skills (
   id uuid default gen_random_uuid() primary key,
-  user_id uuid references auth.users(id) not null,
+  user_id uuid references auth.users(id) not null default auth.uid(),
   name text,
-  level text,
+  level integer default 1,
+  description text,
+  kind text default 'general',
   cv_files jsonb,
   created_at timestamptz default now()
+);
+
+create table if not exists user_profiles (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) not null default auth.uid() unique,
+  display_name text,
+  avatar_url text,
+  timezone text not null default 'UTC',
+  preferred_currency text not null default 'USD',
+  weekly_planning_day text not null default 'Sunday',
+  life_season text,
+  primary_roles text[] not null default '{}',
+  core_values text[] not null default '{}',
+  coaching_tone text not null default 'direct',
+  focus_statement text,
+  default_dashboard_zones text[] not null default array['briefing', 'metrics', 'body', 'motivation', 'ai'],
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  constraint user_profiles_coaching_tone_check check (coaching_tone in ('direct', 'gentle', 'analytical', 'encouraging'))
 );
 
 create table if not exists content (
@@ -198,4 +231,45 @@ create table if not exists tasks (
   updated_at timestamptz default now()
 );
 
+create table if not exists user_gamification_profile (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) not null default auth.uid(),
+  level integer not null default 1,
+  exp integer not null default 0,
+  gold integer not null default 0,
+  class text not null default 'Warrior',
+  unlocked_areas jsonb not null default '[]'::jsonb,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  unique(user_id)
+);
+
+create table if not exists quests (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) not null default auth.uid(),
+  name text not null,
+  type text not null check (type in ('task', 'habit', 'workout', 'body_part')),
+  description text not null,
+  exp_reward integer not null check (exp_reward between 10 and 100),
+  gold_reward integer not null check (gold_reward between 5 and 50),
+  status text not null default 'pending' check (status in ('pending', 'completed', 'failed')),
+  linked_entity_id uuid,
+  body_part text check (body_part in ('head', 'arms', 'chest', 'abs', 'legs', 'back')),
+  quest_date date not null default current_date,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table if not exists body_workouts (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) not null default auth.uid(),
+  profile_id uuid references user_gamification_profile(id) on delete set null,
+  body_part text not null check (body_part in ('head', 'arms', 'chest', 'abs', 'legs', 'back')),
+  reps integer,
+  sets integer,
+  notes text,
+  logged_at timestamptz default now()
+);
+
 -- Create minimal policies: by default enable RLS off; instruct user to enable RLS per table.
+

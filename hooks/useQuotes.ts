@@ -14,8 +14,8 @@ export function useQuotes() {
     setLoading(true)
     setError(null)
     try {
-      // ZenQuotes.io free API for random quotes
-      const res = await fetch('https://zenquotes.io/api/random')
+      // Use Next.js API proxy to avoid CORS
+      const res = await fetch('/api/quotes/random')
       if (!res.ok) throw new Error('Failed to fetch quote')
       const data = await res.json()
       const item = Array.isArray(data) ? data[0] : null

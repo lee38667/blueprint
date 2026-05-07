@@ -61,7 +61,7 @@ function sleep(ms: number): Promise<void> {
 
 // Helper for Supabase queries
 export async function supabaseWithRetry<T>(
-  queryFn: () => Promise<{ data: T | null; error: any }>,
+  queryFn: () => PromiseLike<{ data: T | null; error: any }>,
   options?: RetryOptions
 ): Promise<{ data: T | null; error: any }> {
   return withRetry(async () => {

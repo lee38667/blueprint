@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Modal } from './ModalEnhanced'
 
 const shortcuts = [
@@ -40,25 +40,36 @@ export function KeyboardShortcutsGuide({ isOpen, onClose }: { isOpen: boolean; o
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="⌨️ Keyboard Shortcuts"
+      title="Keyboard Shortcuts"
       size="lg"
     >
       <div className="space-y-6">
         {shortcuts.map((group) => (
           <div key={group.category}>
-            <h3 className="text-sm font-semibold text-electric mb-3">{group.category}</h3>
+            <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--theme-accent)' }}>{group.category}</h3>
             <div className="space-y-2">
               {group.items.map((shortcut, idx) => (
-                <div key={idx} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
-                  <span className="text-neutral-300 text-sm">{shortcut.description}</span>
+                <div
+                  key={idx}
+                  className="flex items-center justify-between py-2 last:border-0"
+                  style={{ borderBottom: '1px solid var(--theme-border)' }}
+                >
+                  <span className="text-sm" style={{ color: 'var(--theme-text-dim)' }}>{shortcut.description}</span>
                   <div className="flex items-center gap-1">
                     {shortcut.keys.map((key, i) => (
                       <span key={i} className="flex items-center gap-1">
-                        <kbd className="px-2 py-1 text-xs font-mono bg-black/40 border border-white/10 rounded">
+                        <kbd
+                          className="px-2 py-1 text-xs font-mono rounded"
+                          style={{
+                            background: 'var(--theme-surface)',
+                            border: '1px solid var(--theme-border)',
+                            color: 'var(--theme-text-dim)',
+                          }}
+                        >
                           {key}
                         </kbd>
                         {i < shortcut.keys.length - 1 && (
-                          <span className="text-neutral-500">+</span>
+                          <span style={{ color: 'var(--theme-text-muted)' }}>+</span>
                         )}
                       </span>
                     ))}
@@ -69,10 +80,13 @@ export function KeyboardShortcutsGuide({ isOpen, onClose }: { isOpen: boolean; o
           </div>
         ))}
 
-        <div className="pt-4 border-t border-white/10">
-          <p className="text-xs text-neutral-500">
-            Note: Use <kbd className="px-1 text-xs bg-black/40 border border-white/10 rounded">Ctrl</kbd> instead of{' '}
-            <kbd className="px-1 text-xs bg-black/40 border border-white/10 rounded">Cmd</kbd> on Windows/Linux
+        <div className="pt-4" style={{ borderTop: '1px solid var(--theme-border)' }}>
+          <p className="text-caption">
+            Note: Use{' '}
+            <kbd className="px-1 text-xs rounded" style={{ background: 'var(--theme-surface)', border: '1px solid var(--theme-border)' }}>Ctrl</kbd>
+            {' '}instead of{' '}
+            <kbd className="px-1 text-xs rounded" style={{ background: 'var(--theme-surface)', border: '1px solid var(--theme-border)' }}>Cmd</kbd>
+            {' '}on Windows/Linux
           </p>
         </div>
       </div>
@@ -80,19 +94,20 @@ export function KeyboardShortcutsGuide({ isOpen, onClose }: { isOpen: boolean; o
   )
 }
 
-// Hook to open shortcuts modal
+// Hook to open shortcuts modal — with proper cleanup
 export function useKeyboardShortcuts() {
   const [isOpen, setIsOpen] = useState(false)
 
-  // Listen for Cmd+/ to open shortcuts
-  if (typeof window !== 'undefined') {
-    window.addEventListener('keydown', (e) => {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === '/') {
         e.preventDefault()
         setIsOpen(true)
       }
-    })
-  }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
 
   return {
     isOpen,
