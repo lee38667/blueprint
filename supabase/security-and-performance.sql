@@ -1,4 +1,4 @@
-﻿-- ============================================
+-- ============================================
 -- Blueprint Security & Performance Enhancements
 -- Run this after schema.sql to add RLS, indexes, soft deletes
 -- ============================================
@@ -60,92 +60,112 @@ ALTER TABLE body_workouts ENABLE ROW LEVEL SECURITY;
 -- ============================================
 
 -- LIFE AREAS
+DROP POLICY IF EXISTS "Users can view own life areas" ON life_areas;
 CREATE POLICY "Users can view own life areas"
   ON life_areas FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own life areas" ON life_areas;
 CREATE POLICY "Users can insert own life areas"
   ON life_areas FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own life areas" ON life_areas;
 CREATE POLICY "Users can update own life areas"
   ON life_areas FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own life areas" ON life_areas;
 CREATE POLICY "Users can delete own life areas"
   ON life_areas FOR DELETE
   USING (auth.uid() = user_id);
 
 -- NOTES
+DROP POLICY IF EXISTS "Users can view own notes (not deleted)" ON notes;
 CREATE POLICY "Users can view own notes (not deleted)"
   ON notes FOR SELECT
   USING (auth.uid() = user_id AND deleted_at IS NULL);
 
+DROP POLICY IF EXISTS "Users can insert own notes" ON notes;
 CREATE POLICY "Users can insert own notes"
   ON notes FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own notes" ON notes;
 CREATE POLICY "Users can update own notes"
   ON notes FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can soft delete own notes" ON notes;
 CREATE POLICY "Users can soft delete own notes"
   ON notes FOR DELETE
   USING (auth.uid() = user_id);
 
 -- TASKS
+DROP POLICY IF EXISTS "Users can view own tasks (not deleted)" ON tasks;
 CREATE POLICY "Users can view own tasks (not deleted)"
   ON tasks FOR SELECT
   USING (auth.uid() = user_id AND deleted_at IS NULL);
 
+DROP POLICY IF EXISTS "Users can insert own tasks" ON tasks;
 CREATE POLICY "Users can insert own tasks"
   ON tasks FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own tasks" ON tasks;
 CREATE POLICY "Users can update own tasks"
   ON tasks FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can soft delete own tasks" ON tasks;
 CREATE POLICY "Users can soft delete own tasks"
   ON tasks FOR DELETE
   USING (auth.uid() = user_id);
 
 -- GOALS
+DROP POLICY IF EXISTS "Users can view own goals (not deleted)" ON goals;
 CREATE POLICY "Users can view own goals (not deleted)"
   ON goals FOR SELECT
   USING (auth.uid() = user_id AND deleted_at IS NULL);
 
+DROP POLICY IF EXISTS "Users can insert own goals" ON goals;
 CREATE POLICY "Users can insert own goals"
   ON goals FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own goals" ON goals;
 CREATE POLICY "Users can update own goals"
   ON goals FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can soft delete own goals" ON goals;
 CREATE POLICY "Users can soft delete own goals"
   ON goals FOR DELETE
   USING (auth.uid() = user_id);
 
 -- GOALS MILESTONES (inherit from parent goal)
+DROP POLICY IF EXISTS "Users can view own goal milestones" ON goals_milestones;
 CREATE POLICY "Users can view own goal milestones"
   ON goals_milestones FOR SELECT
   USING (EXISTS (
     SELECT 1 FROM goals WHERE goals.id = goal_id AND goals.user_id = auth.uid()
   ));
 
+DROP POLICY IF EXISTS "Users can insert own goal milestones" ON goals_milestones;
 CREATE POLICY "Users can insert own goal milestones"
   ON goals_milestones FOR INSERT
   WITH CHECK (EXISTS (
     SELECT 1 FROM goals WHERE goals.id = goal_id AND goals.user_id = auth.uid()
   ));
 
+DROP POLICY IF EXISTS "Users can update own goal milestones" ON goals_milestones;
 CREATE POLICY "Users can update own goal milestones"
   ON goals_milestones FOR UPDATE
   USING (EXISTS (
     SELECT 1 FROM goals WHERE goals.id = goal_id AND goals.user_id = auth.uid()
   ));
 
+DROP POLICY IF EXISTS "Users can delete own goal milestones" ON goals_milestones;
 CREATE POLICY "Users can delete own goal milestones"
   ON goals_milestones FOR DELETE
   USING (EXISTS (
@@ -153,6 +173,7 @@ CREATE POLICY "Users can delete own goal milestones"
   ));
 
 -- GOALS SUBTASKS (inherit from parent milestone)
+DROP POLICY IF EXISTS "Users can view own goal subtasks" ON goals_subtasks;
 CREATE POLICY "Users can view own goal subtasks"
   ON goals_subtasks FOR SELECT
   USING (EXISTS (
@@ -161,6 +182,7 @@ CREATE POLICY "Users can view own goal subtasks"
     WHERE gm.id = milestone_id AND g.user_id = auth.uid()
   ));
 
+DROP POLICY IF EXISTS "Users can insert own goal subtasks" ON goals_subtasks;
 CREATE POLICY "Users can insert own goal subtasks"
   ON goals_subtasks FOR INSERT
   WITH CHECK (EXISTS (
@@ -169,6 +191,7 @@ CREATE POLICY "Users can insert own goal subtasks"
     WHERE gm.id = milestone_id AND g.user_id = auth.uid()
   ));
 
+DROP POLICY IF EXISTS "Users can update own goal subtasks" ON goals_subtasks;
 CREATE POLICY "Users can update own goal subtasks"
   ON goals_subtasks FOR UPDATE
   USING (EXISTS (
@@ -177,6 +200,7 @@ CREATE POLICY "Users can update own goal subtasks"
     WHERE gm.id = milestone_id AND g.user_id = auth.uid()
   ));
 
+DROP POLICY IF EXISTS "Users can delete own goal subtasks" ON goals_subtasks;
 CREATE POLICY "Users can delete own goal subtasks"
   ON goals_subtasks FOR DELETE
   USING (EXISTS (
@@ -186,253 +210,312 @@ CREATE POLICY "Users can delete own goal subtasks"
   ));
 
 -- FINANCE SUMMARY
+DROP POLICY IF EXISTS "Users can view own finance summary" ON finance_summary;
 CREATE POLICY "Users can view own finance summary"
   ON finance_summary FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own finance summary" ON finance_summary;
 CREATE POLICY "Users can insert own finance summary"
   ON finance_summary FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own finance summary" ON finance_summary;
 CREATE POLICY "Users can update own finance summary"
   ON finance_summary FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own finance summary" ON finance_summary;
 CREATE POLICY "Users can delete own finance summary"
   ON finance_summary FOR DELETE
   USING (auth.uid() = user_id);
 
 -- FINANCE HISTORY
+DROP POLICY IF EXISTS "Users can view own finance history" ON finance_history;
 CREATE POLICY "Users can view own finance history"
   ON finance_history FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own finance history" ON finance_history;
 CREATE POLICY "Users can insert own finance history"
   ON finance_history FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
 -- FINANCE LOGS
+DROP POLICY IF EXISTS "Users can view own finance logs (not deleted)" ON finance_logs;
 CREATE POLICY "Users can view own finance logs (not deleted)"
   ON finance_logs FOR SELECT
   USING (auth.uid() = user_id AND deleted_at IS NULL);
 
+DROP POLICY IF EXISTS "Users can insert own finance logs" ON finance_logs;
 CREATE POLICY "Users can insert own finance logs"
   ON finance_logs FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own finance logs" ON finance_logs;
 CREATE POLICY "Users can update own finance logs"
   ON finance_logs FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can soft delete own finance logs" ON finance_logs;
 CREATE POLICY "Users can soft delete own finance logs"
   ON finance_logs FOR DELETE
   USING (auth.uid() = user_id);
 
 -- SAVINGS TARGETS
+DROP POLICY IF EXISTS "Users can view own savings targets" ON savings_targets;
 CREATE POLICY "Users can view own savings targets"
   ON savings_targets FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own savings targets" ON savings_targets;
 CREATE POLICY "Users can insert own savings targets"
   ON savings_targets FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own savings targets" ON savings_targets;
 CREATE POLICY "Users can update own savings targets"
   ON savings_targets FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own savings targets" ON savings_targets;
 CREATE POLICY "Users can delete own savings targets"
   ON savings_targets FOR DELETE
   USING (auth.uid() = user_id);
 
 -- BODY STATS
+DROP POLICY IF EXISTS "Users can view own body stats" ON body_stats;
 CREATE POLICY "Users can view own body stats"
   ON body_stats FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own body stats" ON body_stats;
 CREATE POLICY "Users can insert own body stats"
   ON body_stats FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own body stats" ON body_stats;
 CREATE POLICY "Users can update own body stats"
   ON body_stats FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own body stats" ON body_stats;
 CREATE POLICY "Users can delete own body stats"
   ON body_stats FOR DELETE
   USING (auth.uid() = user_id);
 
 -- MOOD LOGS
+DROP POLICY IF EXISTS "Users can view own mood logs" ON mood_logs;
 CREATE POLICY "Users can view own mood logs"
   ON mood_logs FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own mood logs" ON mood_logs;
 CREATE POLICY "Users can insert own mood logs"
   ON mood_logs FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own mood logs" ON mood_logs;
 CREATE POLICY "Users can update own mood logs"
   ON mood_logs FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own mood logs" ON mood_logs;
 CREATE POLICY "Users can delete own mood logs"
   ON mood_logs FOR DELETE
   USING (auth.uid() = user_id);
 
 -- WORKOUTS
+DROP POLICY IF EXISTS "Users can view own workouts" ON workouts;
 CREATE POLICY "Users can view own workouts"
   ON workouts FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own workouts" ON workouts;
 CREATE POLICY "Users can insert own workouts"
   ON workouts FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own workouts" ON workouts;
 CREATE POLICY "Users can update own workouts"
   ON workouts FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own workouts" ON workouts;
 CREATE POLICY "Users can delete own workouts"
   ON workouts FOR DELETE
   USING (auth.uid() = user_id);
 
 -- WORKOUT LOGS
+DROP POLICY IF EXISTS "Users can view own workout logs" ON workout_logs;
 CREATE POLICY "Users can view own workout logs"
   ON workout_logs FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own workout logs" ON workout_logs;
 CREATE POLICY "Users can insert own workout logs"
   ON workout_logs FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own workout logs" ON workout_logs;
 CREATE POLICY "Users can update own workout logs"
   ON workout_logs FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own workout logs" ON workout_logs;
 CREATE POLICY "Users can delete own workout logs"
   ON workout_logs FOR DELETE
   USING (auth.uid() = user_id);
 
 -- SKILLS
+DROP POLICY IF EXISTS "Users can view own skills" ON skills;
 CREATE POLICY "Users can view own skills"
   ON skills FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own skills" ON skills;
 CREATE POLICY "Users can insert own skills"
   ON skills FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own skills" ON skills;
 CREATE POLICY "Users can update own skills"
   ON skills FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own skills" ON skills;
 CREATE POLICY "Users can delete own skills"
   ON skills FOR DELETE
   USING (auth.uid() = user_id);
 
 -- USER PROFILES
+DROP POLICY IF EXISTS "Users can view own profile" ON user_profiles;
 CREATE POLICY "Users can view own profile"
   ON user_profiles FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own profile" ON user_profiles;
 CREATE POLICY "Users can insert own profile"
   ON user_profiles FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own profile" ON user_profiles;
 CREATE POLICY "Users can update own profile"
   ON user_profiles FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own profile" ON user_profiles;
 CREATE POLICY "Users can delete own profile"
   ON user_profiles FOR DELETE
   USING (auth.uid() = user_id);
 
 -- MOTIVATIONS
+DROP POLICY IF EXISTS "Users can view own motivations (not deleted)" ON motivations;
 CREATE POLICY "Users can view own motivations (not deleted)"
   ON motivations FOR SELECT
   USING (auth.uid() = user_id AND deleted_at IS NULL);
 
+DROP POLICY IF EXISTS "Users can insert own motivations" ON motivations;
 CREATE POLICY "Users can insert own motivations"
   ON motivations FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own motivations" ON motivations;
 CREATE POLICY "Users can update own motivations"
   ON motivations FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can soft delete own motivations" ON motivations;
 CREATE POLICY "Users can soft delete own motivations"
   ON motivations FOR DELETE
   USING (auth.uid() = user_id);
 
 -- CONTENT
+DROP POLICY IF EXISTS "Users can view own content (not deleted)" ON content;
 CREATE POLICY "Users can view own content (not deleted)"
   ON content FOR SELECT
   USING (auth.uid() = user_id AND deleted_at IS NULL);
 
+DROP POLICY IF EXISTS "Users can insert own content" ON content;
 CREATE POLICY "Users can insert own content"
   ON content FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own content" ON content;
 CREATE POLICY "Users can update own content"
   ON content FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can soft delete own content" ON content;
 CREATE POLICY "Users can soft delete own content"
   ON content FOR DELETE
   USING (auth.uid() = user_id);
 
 -- AI INSIGHTS
+DROP POLICY IF EXISTS "Users can view own ai insights" ON ai_insights;
 CREATE POLICY "Users can view own ai insights"
   ON ai_insights FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own ai insights" ON ai_insights;
 CREATE POLICY "Users can insert own ai insights"
   ON ai_insights FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
 -- NOTIFICATIONS
+DROP POLICY IF EXISTS "Users can view own notifications" ON notifications;
 CREATE POLICY "Users can view own notifications"
   ON notifications FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own notifications" ON notifications;
 CREATE POLICY "Users can insert own notifications"
   ON notifications FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own notifications" ON notifications;
 CREATE POLICY "Users can update own notifications"
   ON notifications FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own notifications" ON notifications;
 CREATE POLICY "Users can delete own notifications"
   ON notifications FOR DELETE
   USING (auth.uid() = user_id);
 
 -- SCRIPTURE FAVORITES
+DROP POLICY IF EXISTS "Users can view own scripture favorites" ON scripture_favorites;
 CREATE POLICY "Users can view own scripture favorites"
   ON scripture_favorites FOR SELECT
   USING (auth.uid() = user_id OR user_id IS NULL);
 
+DROP POLICY IF EXISTS "Users can insert own scripture favorites" ON scripture_favorites;
 CREATE POLICY "Users can insert own scripture favorites"
   ON scripture_favorites FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own scripture favorites" ON scripture_favorites;
 CREATE POLICY "Users can delete own scripture favorites"
   ON scripture_favorites FOR DELETE
   USING (auth.uid() = user_id OR user_id IS NULL);
 
 -- CALENDAR CONNECTIONS
+DROP POLICY IF EXISTS "Users can view own calendar connections" ON calendar_connections;
 CREATE POLICY "Users can view own calendar connections"
   ON calendar_connections FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own calendar connections" ON calendar_connections;
 CREATE POLICY "Users can insert own calendar connections"
   ON calendar_connections FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own calendar connections" ON calendar_connections;
 CREATE POLICY "Users can update own calendar connections"
   ON calendar_connections FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own calendar connections" ON calendar_connections;
 CREATE POLICY "Users can delete own calendar connections"
   ON calendar_connections FOR DELETE
   USING (auth.uid() = user_id);
@@ -515,65 +598,65 @@ ALTER TABLE skills ADD COLUMN IF NOT EXISTS level integer default 1;
 ALTER TABLE skills ADD COLUMN IF NOT EXISTS description text;
 ALTER TABLE skills ADD COLUMN IF NOT EXISTS kind text default 'general';
 
-DROP POLICY IF EXISTS "Users can view own gamification profile" ON user_gamification_profile;
-DROP POLICY IF EXISTS "Users can insert own gamification profile" ON user_gamification_profile;
-DROP POLICY IF EXISTS "Users can update own gamification profile" ON user_gamification_profile;
-DROP POLICY IF EXISTS "Users can delete own gamification profile" ON user_gamification_profile;
 
+DROP POLICY IF EXISTS "Users can view own gamification profile" ON user_gamification_profile;
 CREATE POLICY "Users can view own gamification profile"
   ON user_gamification_profile FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own gamification profile" ON user_gamification_profile;
 CREATE POLICY "Users can insert own gamification profile"
   ON user_gamification_profile FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own gamification profile" ON user_gamification_profile;
 CREATE POLICY "Users can update own gamification profile"
   ON user_gamification_profile FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own gamification profile" ON user_gamification_profile;
 CREATE POLICY "Users can delete own gamification profile"
   ON user_gamification_profile FOR DELETE
   USING (auth.uid() = user_id);
 
-DROP POLICY IF EXISTS "Users can view own quests" ON quests;
-DROP POLICY IF EXISTS "Users can insert own quests" ON quests;
-DROP POLICY IF EXISTS "Users can update own quests" ON quests;
-DROP POLICY IF EXISTS "Users can delete own quests" ON quests;
 
+DROP POLICY IF EXISTS "Users can view own quests" ON quests;
 CREATE POLICY "Users can view own quests"
   ON quests FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own quests" ON quests;
 CREATE POLICY "Users can insert own quests"
   ON quests FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own quests" ON quests;
 CREATE POLICY "Users can update own quests"
   ON quests FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own quests" ON quests;
 CREATE POLICY "Users can delete own quests"
   ON quests FOR DELETE
   USING (auth.uid() = user_id);
 
-DROP POLICY IF EXISTS "Users can view own body workouts" ON body_workouts;
-DROP POLICY IF EXISTS "Users can insert own body workouts" ON body_workouts;
-DROP POLICY IF EXISTS "Users can update own body workouts" ON body_workouts;
-DROP POLICY IF EXISTS "Users can delete own body workouts" ON body_workouts;
 
+DROP POLICY IF EXISTS "Users can view own body workouts" ON body_workouts;
 CREATE POLICY "Users can view own body workouts"
   ON body_workouts FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own body workouts" ON body_workouts;
 CREATE POLICY "Users can insert own body workouts"
   ON body_workouts FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own body workouts" ON body_workouts;
 CREATE POLICY "Users can update own body workouts"
   ON body_workouts FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own body workouts" ON body_workouts;
 CREATE POLICY "Users can delete own body workouts"
   ON body_workouts FOR DELETE
   USING (auth.uid() = user_id);
