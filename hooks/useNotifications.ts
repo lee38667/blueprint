@@ -68,6 +68,28 @@ export function useNotifications() {
     }
   }
 
+  const deleteNotification = async (id: string) => {
+    try {
+      setError(null)
+      await supabaseWithRetry(() => supabase.from('notifications').delete().eq('id', id))
+      toast.success('Notification removed')
+      await load()
+    } catch (err) {
+      handleError(err, { fallback: 'Failed to delete notification', setError, toast })
+    }
+  }
+
+  const clearDone = async () => {
+    try {
+      setError(null)
+      await supabaseWithRetry(() => supabase.from('notifications').delete().eq('status', 'done'))
+      toast.success('Completed reminders cleared')
+      await load()
+    } catch (err) {
+      handleError(err, { fallback: 'Failed to clear reminders', setError, toast })
+    }
+  }
+
   const pendingCount = useMemo(() => items.filter((item) => item.status === 'pending').length, [items])
 
   const evaluateAndInsert = useCallback(async (snapshot: AISnapshot, habitData?: { habits: any[]; logs: any[] }) => {
@@ -99,7 +121,7 @@ export function useNotifications() {
     }
   }, [items, load])
 
-  return { items, loading, error, pendingCount, addNotification, updateNotification, evaluateAndInsert, refresh: load }
+  return { items, loading, error, pendingCount, addNotification, updateNotification, deleteNotification, clearDone, evaluateAndInsert, refresh: load }
 }
 
 export default useNotifications

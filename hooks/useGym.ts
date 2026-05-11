@@ -65,7 +65,59 @@ export function useGym(){
     }
   }, [toast])
 
-  return { loading, error, workouts, logs, addWorkout, addLog, refresh: load }
+  const updateWorkout = useCallback(async (id: string, patch: any) => {
+    try {
+      setError(null)
+      await supabaseWithRetry(() => supabase.from('workouts').update(patch).eq('id', id))
+      const { data } = await supabaseWithRetry(() => supabase.from('workouts').select('*').order('day'))
+      setWorkouts(data ?? [])
+      toast.success('Workout updated')
+    } catch (err: any) {
+      handleError(err, { fallback: 'Failed to update workout', setError, toast })
+    }
+  }, [toast])
+
+  const deleteWorkout = useCallback(async (id: string) => {
+    try {
+      setError(null)
+      await supabaseWithRetry(() => supabase.from('workouts').delete().eq('id', id))
+      const [w, l] = await Promise.all([
+        supabaseWithRetry(() => supabase.from('workouts').select('*').order('day')),
+        supabaseWithRetry(() => supabase.from('workout_logs').select('*').order('performed_at', { ascending: false })),
+      ])
+      setWorkouts(w.data ?? [])
+      setLogs(l.data ?? [])
+      toast.success('Workout deleted')
+    } catch (err: any) {
+      handleError(err, { fallback: 'Failed to delete workout', setError, toast })
+    }
+  }, [toast])
+
+  const updateLog = useCallback(async (id: string, patch: any) => {
+    try {
+      setError(null)
+      await supabaseWithRetry(() => supabase.from('workout_logs').update(patch).eq('id', id))
+      const { data } = await supabaseWithRetry(() => supabase.from('workout_logs').select('*').order('performed_at', { ascending: false }))
+      setLogs(data ?? [])
+      toast.success('Log updated')
+    } catch (err: any) {
+      handleError(err, { fallback: 'Failed to update log', setError, toast })
+    }
+  }, [toast])
+
+  const deleteLog = useCallback(async (id: string) => {
+    try {
+      setError(null)
+      await supabaseWithRetry(() => supabase.from('workout_logs').delete().eq('id', id))
+      const { data } = await supabaseWithRetry(() => supabase.from('workout_logs').select('*').order('performed_at', { ascending: false }))
+      setLogs(data ?? [])
+      toast.success('Log removed')
+    } catch (err: any) {
+      handleError(err, { fallback: 'Failed to remove log', setError, toast })
+    }
+  }, [toast])
+
+  return { loading, error, workouts, logs, addWorkout, addLog, updateWorkout, deleteWorkout, updateLog, deleteLog, refresh: load }
 }
 
 export default useGym

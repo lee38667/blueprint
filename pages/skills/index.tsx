@@ -6,6 +6,7 @@ import ConfirmDialog from '../../components/ConfirmDialog'
 import { CardSkeleton } from '../../components/Skeleton'
 import { useSkills } from '../../hooks/useSkills'
 import { useConfirm } from '../../hooks/useConfirm'
+import { exportSkillsToCSV } from '../../lib/csvExport'
 import type { Skill } from '../../types/models'
 
 const INITIAL_FORM = {
@@ -105,6 +106,7 @@ export default function SkillsPage() {
               <option value="level">Sort by level</option>
               <option value="name">Sort by name</option>
             </select>
+            <Button variant="outline" size="sm" onClick={() => exportSkillsToCSV(skills)} disabled={skills.length === 0}>Export CSV</Button>
           </div>
         </header>
 

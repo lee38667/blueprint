@@ -76,3 +76,28 @@ export function exportGoalsToCSV(goals: any[]): void {
   const timestamp = new Date().toISOString().split('T')[0]
   downloadCSV(`blueprint-goals-${timestamp}.csv`, csv)
 }
+
+export function exportSkillsToCSV(skills: any[]): void {
+  const headers = ['id', 'name', 'level', 'kind', 'description', 'created_at']
+  const csv = convertToCSV(skills, headers)
+  const timestamp = new Date().toISOString().split('T')[0]
+  downloadCSV(`blueprint-skills-${timestamp}.csv`, csv)
+}
+
+export function exportWorkoutLogsToCSV(logs: any[], workouts: any[]): void {
+  const enriched = logs.map((log) => {
+    const w = workouts.find((wk) => wk.id === log.workout_id)
+    return {
+      id: log.id,
+      workout: w?.name ?? '',
+      day: w?.day ?? '',
+      performed_at: log.performed_at,
+      notes: log.notes ?? '',
+      metrics: log.metrics ?? '',
+    }
+  })
+  const headers = ['id', 'workout', 'day', 'performed_at', 'notes', 'metrics']
+  const csv = convertToCSV(enriched, headers)
+  const timestamp = new Date().toISOString().split('T')[0]
+  downloadCSV(`blueprint-workouts-${timestamp}.csv`, csv)
+}

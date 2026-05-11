@@ -18,10 +18,11 @@ function groupLabel(dueAt: string | null) {
 }
 
 export default function NotificationsPage() {
-  const { items, loading, addNotification, updateNotification } = useNotifications()
+  const { items, loading, addNotification, updateNotification, deleteNotification, clearDone } = useNotifications()
   const [title, setTitle] = useState('')
   const [message, setMessage] = useState('')
   const [due, setDue] = useState('')
+  const [tab, setTab] = useState<'active' | 'done'>('active')
 
   useEffect(() => {
     if (typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') return
@@ -31,13 +32,21 @@ export default function NotificationsPage() {
     }
   }, [items])
 
+  const filteredItems = useMemo(
+    () => items.filter((item) => tab === 'done' ? item.status === 'done' : item.status !== 'done'),
+    [items, tab],
+  )
+
   const grouped = useMemo(() => {
-    return items.reduce<Record<string, typeof items>>((acc, item) => {
-      const key = groupLabel(item.due_at)
+    return filteredItems.reduce<Record<string, typeof items>>((acc, item) => {
+      const key = tab === 'done' ? 'Completed' : groupLabel(item.due_at)
       acc[key] = [...(acc[key] || []), item]
       return acc
     }, {})
-  }, [items])
+  }, [filteredItems, tab])
+
+  const activeCount = items.filter((item) => item.status !== 'done').length
+  const doneCount = items.length - activeCount
 
   const handleAdd = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -56,7 +65,29 @@ export default function NotificationsPage() {
   return (
     <Layout>
       <div className="max-w-5xl mx-auto space-y-6 py-4">
-        <h1 className="heading-xl">Notifications</h1>
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+          <h1 className="heading-xl">Notifications</h1>
+          <div className="flex items-center gap-2">
+            <div className="inline-flex rounded-lg p-0.5" style={{ background: 'var(--theme-surface)', border: '1px solid var(--theme-border)' }}>
+              {(['active', 'done'] as const).map((value) => (
+                <button
+                  key={value}
+                  onClick={() => setTab(value)}
+                  className="px-3 py-1.5 rounded-md text-xs capitalize"
+                  style={{
+                    background: tab === value ? 'var(--theme-accent)' : 'transparent',
+                    color: tab === value ? 'var(--theme-accent-text)' : 'var(--theme-text-muted)',
+                  }}
+                >
+                  {value} ({value === 'active' ? activeCount : doneCount})
+                </button>
+              ))}
+            </div>
+            {tab === 'done' && doneCount > 0 && (
+              <Button size="sm" variant="outline" onClick={() => clearDone()}>Clear all</Button>
+            )}
+          </div>
+        </div>
 
         <Card title="Create Reminder" subtitle="Gentle prompts with context and low-friction snoozes">
           <form onSubmit={handleAdd} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 items-end">
@@ -86,9 +117,10 @@ export default function NotificationsPage() {
                       {item.message && <div className="text-sm mt-1" style={{ color: 'var(--theme-text-dim)' }}>{item.message}</div>}
                     </div>
                     <div className="flex gap-2 text-xs flex-wrap">
-                      <button onClick={() => snoozeByMinutes(item.id, 15)} className="px-3 py-1 rounded" style={{ border: '1px solid var(--theme-border)' }}>Snooze 15m</button>
-                      <button onClick={() => snoozeByMinutes(item.id, 60)} className="px-3 py-1 rounded" style={{ border: '1px solid var(--theme-border)' }}>Snooze 1h</button>
-                      <button onClick={() => updateNotification(item.id, { status: 'done' })} className="btn-accent px-3 py-1 rounded">Done</button>
+                      {item.status !== 'done' && <button onClick={() => snoozeByMinutes(item.id, 15)} className="px-3 py-1 rounded" style={{ border: '1px solid var(--theme-border)' }}>Snooze 15m</button>}
+                      {item.status !== 'done' && <button onClick={() => snoozeByMinutes(item.id, 60)} className="px-3 py-1 rounded" style={{ border: '1px solid var(--theme-border)' }}>Snooze 1h</button>}
+                      {item.status !== 'done' && <button onClick={() => updateNotification(item.id, { status: 'done' })} className="btn-accent px-3 py-1 rounded">Done</button>}
+                      <button onClick={() => deleteNotification(item.id)} className="px-3 py-1 rounded border border-red-500/40 text-red-400 hover:bg-red-500/10">Delete</button>
                     </div>
                   </div>
 
