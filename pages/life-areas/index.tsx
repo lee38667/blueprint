@@ -98,7 +98,7 @@ export default function LifeAreasPage() {
         <header>
           <h1 className="heading-xl">Life Areas</h1>
           <p className="text-sm" style={{ color: 'var(--theme-text-muted)' }}>
-            The big categories your goals roll up into. Match a goal's <em>category</em> field to an area name to see it appear here.
+            The big categories your goals roll up into. Match a goal&apos;s <em>category</em> field to an area name to see it appear here.
           </p>
           {error && <p className="text-xs text-red-400 mt-2">{error}</p>}
         </header>
