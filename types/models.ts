@@ -131,6 +131,27 @@ export interface GoalCoachInsight {
   nextSteps: string[]
 }
 
+export interface ProposedGoalMilestone {
+  title: string
+  due_date: string | null
+}
+
+export interface ProposedGoal {
+  title: string
+  category: string | null
+  target_date: string | null
+  rationale: string
+  milestones: ProposedGoalMilestone[]
+}
+
+export interface GoalPlan {
+  mode: 'goals' | 'recommendations'
+  summary: string
+  goals: ProposedGoal[]
+  recommendations: string[]
+  today: string
+}
+
 export interface FinanceProjectionPoint {
   label: string
   value: number

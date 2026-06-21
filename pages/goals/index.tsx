@@ -10,13 +10,16 @@ import VoiceInputButton from '../../components/VoiceInputButton'
 import { CardSkeleton } from '../../components/Skeleton'
 import { useGoals } from '../../hooks/useGoals'
 import useGoalCoach from '../../hooks/useGoalCoach'
+import useGoalPlanner from '../../hooks/useGoalPlanner'
 import useMoodLogs from '../../hooks/useMoodLogs'
 import useBodyStats from '../../hooks/useBodyStats'
 import { getEnergyProfile, getNextSmallestStep } from '../../lib/focusEngine'
 import { exportGoalsToCSV } from '../../lib/csvExport'
 
 export default function GoalsPage() {
-  const { goals, milestones, subtasks, loading, addGoal, updateStatus, addMilestone, updateMilestone, addSubtask, updateSubtask, getLinkedTaskProgress } = useGoals()
+  const { goals, milestones, subtasks, loading, addGoal, addPlannedGoal, updateStatus, addMilestone, updateMilestone, addSubtask, updateSubtask, getLinkedTaskProgress } = useGoals()
+  const { plan, loading: planLoading, error: planError, generate: generatePlan } = useGoalPlanner()
+  const [planIntent, setPlanIntent] = useState('')
   const { logs: moodLogs } = useMoodLogs()
   const { stats } = useBodyStats()
   const [title, setTitle] = useState('')
@@ -91,6 +94,81 @@ export default function GoalsPage() {
             </div>
             <Button variant="primary" className="text-xs w-full md:w-auto" type="submit">Save Goal</Button>
           </form>
+        </Card>
+
+        <Card title="AI Goal Planner" subtitle="The AI sets sensible, date-aware goals — or recommends refinements if you don't need a new one.">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+            <div className="md:col-span-3">
+              <label className="block text-xs mb-1" style={{ color: 'var(--theme-text-muted)' }}>What do you want to work toward? (optional)</label>
+              <input
+                value={planIntent}
+                onChange={(event) => setPlanIntent(event.target.value)}
+                placeholder="e.g. get stronger, save for a trip, read more — or leave blank"
+                className="input-base w-full"
+              />
+            </div>
+            <Button
+              variant="primary"
+              className={`text-xs w-full md:w-auto ${planLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+              onClick={() => { if (!planLoading) generatePlan(planIntent, goals) }}
+            >
+              {planLoading ? 'Planning...' : 'Plan with AI'}
+            </Button>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {planLoading ? (
+              <CardSkeleton className="h-24" />
+            ) : planError ? (
+              <p className="text-sm text-red-400">{planError}</p>
+            ) : plan ? (
+              <div className="space-y-3">
+                <p className="text-sm" style={{ color: 'var(--theme-text-dim)' }}>{plan.summary}</p>
+                <p className="text-[11px]" style={{ color: 'var(--theme-text-muted)' }}>Planned as of {plan.today}</p>
+
+                {plan.mode === 'goals' && plan.goals.length > 0 && (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                    {plan.goals.map((g, idx) => (
+                      <div key={idx} className="rounded-xl p-4" style={{ background: 'var(--theme-surface)', border: '1px solid var(--theme-border)' }}>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold" style={{ color: 'var(--theme-text)' }}>{g.title}</p>
+                            <div className="flex flex-wrap gap-2 mt-1 text-[11px]" style={{ color: 'var(--theme-text-muted)' }}>
+                              {g.category && <span className="badge">{g.category}</span>}
+                              {g.target_date && <span>🎯 {g.target_date}</span>}
+                            </div>
+                          </div>
+                          <Button variant="outline" className="text-xs shrink-0" onClick={() => addPlannedGoal(g)}>Add</Button>
+                        </div>
+                        {g.rationale && <p className="text-xs mt-2" style={{ color: 'var(--theme-text-dim)' }}>{g.rationale}</p>}
+                        {g.milestones.length > 0 && (
+                          <ul className="mt-2 space-y-1 text-xs" style={{ color: 'var(--theme-text-muted)' }}>
+                            {g.milestones.map((m, mIdx) => (
+                              <li key={mIdx} className="flex justify-between gap-2">
+                                <span>• {m.title}</span>
+                                {m.due_date && <span className="font-mono">{m.due_date}</span>}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {plan.mode === 'recommendations' && plan.recommendations.length > 0 && (
+                  <div className="rounded-xl p-4" style={{ background: 'var(--theme-surface)', border: '1px solid var(--theme-border)' }}>
+                    <p className="text-xs uppercase tracking-wide mb-2" style={{ color: 'var(--theme-accent)' }}>Recommendations</p>
+                    <ul className="list-disc pl-5 space-y-1 text-sm" style={{ color: 'var(--theme-text-dim)' }}>
+                      {plan.recommendations.map((r, idx) => <li key={idx}>{r}</li>)}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm subtle-muted">Tell the AI a focus (or leave it blank) and it will propose dated goals with milestones, or recommend how to refine what you already have.</p>
+            )}
+          </div>
         </Card>
 
         <Card title="Add Milestone">

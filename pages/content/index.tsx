@@ -97,13 +97,18 @@ export default function ContentPage() {
     }
   }
 
-  const openDoc = (item: DocumentItem) => {
+  const openDoc = async (item: DocumentItem) => {
     const path = item.metadata?.path
     if (!path) return
-    const { data } = supabase.storage.from('documents').getPublicUrl(path)
-    if (data?.publicUrl) {
-      window.open(data.publicUrl, '_blank')
+    // The documents bucket is PRIVATE, so getPublicUrl() returns a non-working
+    // URL. Generate a short-lived signed URL instead.
+    const bucket = item.metadata?.bucket ?? 'documents'
+    const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 300)
+    if (error || !data?.signedUrl) {
+      toast.error(error?.message || 'Could not open document')
+      return
     }
+    window.open(data.signedUrl, '_blank')
   }
 
   const handleShare = async (item: DocumentItem, hours: number) => {

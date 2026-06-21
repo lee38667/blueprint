@@ -6,6 +6,17 @@ import { useConfirm } from '../../hooks/useConfirm'
 import { useGym } from '../../hooks/useGym'
 import { CardSkeleton } from '../../components/Skeleton'
 import { exportWorkoutLogsToCSV } from '../../lib/csvExport'
+import MuscleMap from '../../components/MuscleMap'
+import {
+  aggregateMuscleActivity,
+  muscleStatus,
+  underTrainedMuscles,
+  musclesForExercise,
+  MUSCLES,
+  ALL_MUSCLE_KEYS,
+  type MuscleKey,
+  type MuscleStatus,
+} from '../../lib/muscles'
 import { useMemo, useState } from 'react'
 
 type ExerciseSet = { reps: number; weight: number }
@@ -52,6 +63,9 @@ export default function GymPage() {
   // History expansion
   const [expandedWorkout, setExpandedWorkout] = useState<string | null>(null)
 
+  // Muscle map
+  const [selectedMuscle, setSelectedMuscle] = useState<MuscleKey | null>(null)
+
   const stats = useMemo(() => {
     const now = Date.now()
     const weekAgo = now - 7 * 24 * 60 * 60 * 1000
@@ -71,6 +85,41 @@ export default function GymPage() {
     }
     return { totalVol, totalSets, weekSessions: weekLogs.length, prs }
   }, [logs])
+
+  // Flatten logged exercises → per-muscle activity, recovery status, coverage gaps.
+  const muscle = useMemo(() => {
+    const now = Date.now()
+    const flat = logs.flatMap((l) =>
+      parseMetrics(l.metrics).exercises.map((ex) => ({
+        name: ex.name,
+        sets: ex.sets.length,
+        performedAt: l.performed_at,
+      }))
+    )
+    const activity = aggregateMuscleActivity(flat, now, 7)
+    const statusByMuscle = {} as Record<MuscleKey, MuscleStatus>
+    const setsByMuscle = {} as Record<MuscleKey, number>
+    for (const key of ALL_MUSCLE_KEYS) {
+      statusByMuscle[key] = muscleStatus(key, activity[key])
+      setsByMuscle[key] = activity[key].sets
+    }
+    const gaps = underTrainedMuscles(activity).slice(0, 4)
+    // Exercises in history that train the currently-selected muscle.
+    const hits = selectedMuscle
+      ? Array.from(
+          new Set(
+            flat
+              .filter((e) => {
+                const m = musclesForExercise(e.name)
+                return m.primary.includes(selectedMuscle) || m.secondary.includes(selectedMuscle)
+              })
+              .map((e) => e.name)
+          )
+        ).slice(0, 6)
+      : []
+    const trainedCount = ALL_MUSCLE_KEYS.filter((k) => activity[k].lastTrained !== null).length
+    return { statusByMuscle, setsByMuscle, gaps, hits, trainedCount }
+  }, [logs, selectedMuscle])
 
   const resetWorkoutForm = () => {
     setEditingWorkoutId(null)
@@ -195,6 +244,77 @@ export default function GymPage() {
             </div>
           ))}
         </div>
+
+        {/* Muscle coverage & recovery */}
+        <Card
+          title="Muscle Coverage & Recovery"
+          subtitle={`${muscle.trainedCount}/${ALL_MUSCLE_KEYS.length} muscle groups trained · colored by recovery from your logged sets`}
+        >
+          <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr] items-start">
+            <MuscleMap
+              statusByMuscle={muscle.statusByMuscle}
+              setsByMuscle={muscle.setsByMuscle}
+              selected={selectedMuscle}
+              onSelect={setSelectedMuscle}
+            />
+
+            <div className="space-y-4">
+              {selectedMuscle ? (
+                <div className="rounded-xl p-4" style={{ background: 'var(--theme-surface)', border: '1px solid var(--theme-border)' }}>
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <h3 className="text-sm font-semibold" style={{ color: 'var(--theme-text)' }}>{MUSCLES[selectedMuscle].label}</h3>
+                    <button onClick={() => setSelectedMuscle(null)} className="text-[11px]" style={{ color: 'var(--theme-text-muted)' }}>clear</button>
+                  </div>
+                  <p className="text-xs mb-2" style={{ color: 'var(--theme-text-muted)' }}>
+                    {Math.round(muscle.setsByMuscle[selectedMuscle] * 10) / 10} effective sets this week (target {MUSCLES[selectedMuscle].weeklySetTarget}).
+                  </p>
+                  {muscle.hits.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {muscle.hits.map((name) => (
+                        <span key={name} className="badge text-[11px]">{name}</span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs" style={{ color: 'var(--theme-text-muted)' }}>
+                      No logged exercise has hit this muscle yet.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="rounded-xl p-4" style={{ background: 'var(--theme-surface)', border: '1px solid var(--theme-border)' }}>
+                  <p className="text-xs uppercase tracking-wide mb-1" style={{ color: 'var(--theme-text-muted)' }}>How it works</p>
+                  <p className="text-sm" style={{ color: 'var(--theme-text-dim)' }}>
+                    Every set you log is mapped to the muscles it trains. Green is recovered and ready, yellow is mid-recovery, red was just worked.
+                  </p>
+                </div>
+              )}
+
+              <div className="rounded-xl p-4" style={{ background: 'var(--theme-surface)', border: '1px solid var(--theme-border)' }}>
+                <p className="text-xs uppercase tracking-wide mb-2" style={{ color: 'var(--theme-text-muted)' }}>Train next — biggest gaps</p>
+                {muscle.gaps.length === 0 ? (
+                  <p className="text-sm" style={{ color: 'var(--theme-text-dim)' }}>Great balance — every group is near its weekly target.</p>
+                ) : (
+                  <ul className="space-y-1.5">
+                    {muscle.gaps.map((g) => (
+                      <li key={g.key} className="flex items-center justify-between text-sm">
+                        <button
+                          className="text-left hover:underline"
+                          style={{ color: 'var(--theme-text)' }}
+                          onClick={() => setSelectedMuscle(g.key)}
+                        >
+                          {MUSCLES[g.key].label}
+                        </button>
+                        <span className="font-mono text-xs" style={{ color: 'var(--theme-text-muted)' }}>
+                          {Math.round(g.sets * 10) / 10}/{g.target} sets
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+        </Card>
 
         {/* Workout template form */}
         <Card title={editingWorkoutId ? 'Edit Workout' : 'New Workout'} subtitle="A reusable template you can log sessions against.">
