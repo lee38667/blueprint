@@ -19,7 +19,7 @@ interface ToastStore {
   warning: (message: string) => void
 }
 
-export const useToastStore = create<ToastStore>((set) => ({
+export const useToastStore = create<ToastStore>()((set) => ({
   toasts: [],
 
   addToast: (message, type, duration = 3000) => {

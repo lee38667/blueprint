@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { supabaseWithRetry } from '../lib/retry'
 import { handleError } from '../lib/errors'
 import { useToastStore } from '../lib/toastStore'
+import { authedFetch } from '../lib/apiClient'
 
 type DataAction = {
   type: 'body_stats' | 'mood' | 'finance' | 'task' | 'note' | 'goal' | 'unknown'
@@ -28,7 +29,7 @@ export function useAIRecorder() {
       }
 
       // Call AI to parse the message
-      const response = await fetch('/api/ai-copilot', {
+      const response = await authedFetch('/api/ai-copilot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mode: 'record', message })

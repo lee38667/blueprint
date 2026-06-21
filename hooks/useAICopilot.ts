@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { AISnapshot, BrainInsight, hashSnapshot } from '../lib/aiSnapshot'
 import { useAIStore } from '../lib/aiStore'
+import { authedFetch } from '../lib/apiClient'
 
 type Mode = 'mood' | 'focus'
 
@@ -21,7 +22,7 @@ export function useAICopilot() {
     setError(null)
 
     try {
-      const res = await fetch('/api/ai-copilot', {
+      const res = await authedFetch('/api/ai-copilot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mood, mode })
@@ -57,7 +58,7 @@ export function useAICopilot() {
 
     setBrainLoadingState(snapshotHash)
     try {
-      const res = await fetch('/api/ai-copilot', {
+      const res = await authedFetch('/api/ai-copilot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mode: 'brain', snapshot })

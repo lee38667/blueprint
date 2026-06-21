@@ -3,6 +3,7 @@ import Card from '../../components/Card'
 import Button from '../../components/Button'
 import { useContentLibrary } from '../../hooks/useContentLibrary'
 import { supabase } from '../../lib/supabaseClient'
+import { authedFetch } from '../../lib/apiClient'
 import { useToastStore } from '../../lib/toastStore'
 import { CardSkeleton } from '../../components/Skeleton'
 import { useMemo, useState } from 'react'
@@ -58,7 +59,7 @@ export default function ContentPage() {
       if (error) throw error
 
       const snippet = await readSnippet(selected)
-      const summaryRes = await fetch('/api/documents/summarize', {
+      const summaryRes = await authedFetch('/api/documents/summarize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: selected.name, snippet, context }),

@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { createClient } from '@supabase/supabase-js'
 import { AISnapshot, formatSnapshotForAI } from '../../lib/aiSnapshot'
+import { authGuard } from '../../lib/apiAuth'
+import { getUpcomingEvents, formatCalendarSummary } from '../../lib/serverCalendar'
 
 interface ChatMessage {
   role: 'user' | 'assistant'
@@ -33,6 +34,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
+  const user = await authGuard(req, res, { name: 'chat', rateLimit: { limit: 30, windowMs: 60_000 } })
+  if (!user) return
+
   const apiKey = process.env.AI_API_KEY || process.env.GITHUB_DEVELOPER_AI_KEY
   if (!apiKey) {
     return res.status(500).json({ error: 'AI API key not configured' })
@@ -56,82 +60,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     memoryContext = `\n\nYour Memory (things you've learned about the user from past conversations):\n${memories.map(m => `- ${m}`).join('\n')}`
   }
 
-  // Fetch Google Calendar events server-side
+  // Fetch Google Calendar events server-side, scoped to the authenticated user.
   let calendarSummary = ''
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-  if (supabaseUrl && supabaseServiceKey) {
-    try {
-      const supabaseServer = createClient(supabaseUrl, supabaseServiceKey, {
-        auth: { persistSession: false }
-      })
-
-      const { data: calendarConnection } = await supabaseServer
-        .from('calendar_connections')
-        .select('id')
-        .single()
-
-      if (calendarConnection) {
-        const calResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'}/api/calendar/events`, {
-          headers: {
-            'Authorization': `Bearer ${supabaseServiceKey}`
-          }
-        })
-
-        if (calResponse.ok) {
-          const { events } = await calResponse.json()
-          const today = new Date()
-          const tomorrow = new Date(today)
-          tomorrow.setDate(tomorrow.getDate() + 1)
-
-          const todayEvents = events.filter((e: any) => {
-            const eventDate = new Date(e.start)
-            return eventDate.toDateString() === today.toDateString()
-          })
-
-          const tomorrowEvents = events.filter((e: any) => {
-            const eventDate = new Date(e.start)
-            return eventDate.toDateString() === tomorrow.toDateString()
-          })
-
-          const upcomingEvents = events.filter((e: any) => {
-            const eventDate = new Date(e.start)
-            return eventDate > tomorrow && eventDate <= new Date(today.getTime() + 7 * 86400000)
-          })
-
-          const parts: string[] = []
-          if (todayEvents.length > 0) {
-            parts.push('Today\'s schedule:')
-            todayEvents.forEach((e: any) => {
-              const time = new Date(e.start).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-              parts.push(`- ${time}: ${e.summary}${e.location ? ` (${e.location})` : ''}`)
-            })
-          }
-          if (tomorrowEvents.length > 0) {
-            parts.push('\nTomorrow:')
-            tomorrowEvents.forEach((e: any) => {
-              const time = new Date(e.start).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-              parts.push(`- ${time}: ${e.summary}${e.location ? ` (${e.location})` : ''}`)
-            })
-          }
-          if (upcomingEvents.length > 0) {
-            parts.push('\nUpcoming this week:')
-            upcomingEvents.forEach((e: any) => {
-              const date = new Date(e.start).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-              const time = new Date(e.start).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-              parts.push(`- ${date} ${time}: ${e.summary}`)
-            })
-          }
-
-          if (parts.length > 0) {
-            calendarSummary = parts.join('\n')
-          }
-        }
-      }
-    } catch (err) {
-      console.error('Calendar fetch error in chat:', err)
-    }
+  try {
+    const events = await getUpcomingEvents(user.id)
+    calendarSummary = formatCalendarSummary(events)
+  } catch (err) {
+    console.error('Calendar fetch error in chat:', err)
   }
 
   const calendarSection = calendarSummary

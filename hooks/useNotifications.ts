@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { supabaseWithRetry } from '../lib/retry'
 import { handleError } from '../lib/errors'
 import { useToastStore } from '../lib/toastStore'
+import { authedFetch } from '../lib/apiClient'
 import type { AISnapshot } from '../lib/aiSnapshot'
 
 export interface Notification {
@@ -94,7 +95,7 @@ export function useNotifications() {
 
   const evaluateAndInsert = useCallback(async (snapshot: AISnapshot, habitData?: { habits: any[]; logs: any[] }) => {
     try {
-      const res = await fetch('/api/notifications/evaluate', {
+      const res = await authedFetch('/api/notifications/evaluate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ snapshot, habits: habitData })

@@ -12,7 +12,7 @@ interface AIStoreState {
   reset: () => void
 }
 
-export const useAIStore = create<AIStoreState>((set) => ({
+export const useAIStore = create<AIStoreState>()((set) => ({
   currentHash: null,
   insight: null,
   loading: false,

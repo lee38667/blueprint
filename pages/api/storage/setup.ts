@@ -1,10 +1,15 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import { supabase } from '@/lib/supabaseClient'
+import { authGuard, getServiceClient } from '@/lib/apiAuth'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
+
+  const user = await authGuard(req, res, { name: 'storage-setup' })
+  if (!user) return
+
+  const supabase = getServiceClient()
 
   try {
     const { bucketName = 'documents' } = req.body

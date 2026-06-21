@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { authGuard } from '../../../lib/apiAuth'
 
 type SummaryPayload = {
   balance?: number | null
@@ -34,6 +35,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
+
+  const user = await authGuard(req, res, { name: 'finance-coach', rateLimit: { limit: 30, windowMs: 60_000 } })
+  if (!user) return
 
   const apiKey = process.env.AI_API_KEY || process.env.GITHUB_DEVELOPER_AI_KEY
   if (!apiKey) {

@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { createClient } from '@supabase/supabase-js'
 import { AISnapshot, BrainInsight, HunterRadarInsight, HunterRadarStat, formatSnapshotForAI } from '../../lib/aiSnapshot'
+import { authGuard, getServiceClient } from '../../lib/apiAuth'
+import { getUpcomingEvents, formatCalendarSummary } from '../../lib/serverCalendar'
 
 type DataAction = {
   type: 'body_stats' | 'mood' | 'finance' | 'task' | 'note' | 'goal' | 'unknown'
@@ -131,13 +132,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
+  const user = await authGuard(req, res, { name: 'ai-copilot', rateLimit: { limit: 40, windowMs: 60_000 } })
+  if (!user) return
+
   const apiKey = process.env.AI_API_KEY || process.env.GITHUB_DEVELOPER_AI_KEY
   if (!apiKey) {
     return res.status(500).json({ error: 'AI API key not configured' })
   }
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   const { mood, mode = 'mood', snapshot, message } = req.body as {
     mood?: string
@@ -155,66 +156,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     let moodSummary = ''
     let calendarSummary = ''
 
-    if (mode === 'focus' && supabaseUrl && supabaseServiceKey) {
-      const supabaseServer = createClient(supabaseUrl, supabaseServiceKey, {
-        auth: { persistSession: false },
-      })
-
+    if (mode === 'focus') {
       try {
-        const { data: calendarConnection } = await supabaseServer
-          .from('calendar_connections')
-          .select('id')
-          .single()
-
-        if (calendarConnection) {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'}/api/calendar/events`, {
-            headers: {
-              Authorization: `Bearer ${supabaseServiceKey}`,
-            },
-          })
-
-          if (response.ok) {
-            const { events } = await response.json()
-            const today = new Date()
-            const tomorrow = new Date(today)
-            tomorrow.setDate(tomorrow.getDate() + 1)
-
-            const todayEvents = events.filter((e: any) => new Date(e.start).toDateString() === today.toDateString())
-            const tomorrowEvents = events.filter((e: any) => new Date(e.start).toDateString() === tomorrow.toDateString())
-
-            if (todayEvents.length > 0 || tomorrowEvents.length > 0) {
-              const parts: string[] = []
-              if (todayEvents.length > 0) {
-                parts.push("Today's schedule:")
-                todayEvents.forEach((e: any) => {
-                  const time = new Date(e.start).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-                  parts.push(`- ${time}: ${e.summary}${e.location ? ` (${e.location})` : ''}`)
-                })
-              }
-              if (tomorrowEvents.length > 0) {
-                parts.push('\nTomorrow:')
-                tomorrowEvents.forEach((e: any) => {
-                  const time = new Date(e.start).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-                  parts.push(`- ${time}: ${e.summary}`)
-                })
-              }
-              calendarSummary = parts.join('\n')
-            }
-          }
-        }
+        const events = await getUpcomingEvents(user.id)
+        calendarSummary = formatCalendarSummary(events)
       } catch (err) {
         console.error('Calendar fetch error in AI:', err)
       }
 
+      const supabaseServer = getServiceClient()
+
       const { data: goals } = await supabaseServer
         .from('goals')
         .select('title, status, target_date')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(5)
 
       const { data: moods } = await supabaseServer
         .from('mood_logs')
         .select('mood_label, mood_score, stress_score, created_at')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(7)
 

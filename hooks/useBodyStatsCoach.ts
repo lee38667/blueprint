@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { BodyStat } from '../types/models'
+import { authedFetch } from '../lib/apiClient'
 
 interface CoachResponse {
   headline: string
@@ -25,7 +26,7 @@ export function useBodyStatsCoach(stats: BodyStat[]) {
       setLoading(true)
       setError(null)
       try {
-        const res = await fetch('/api/body-stats/advice', {
+        const res = await authedFetch('/api/body-stats/advice', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ stats: stats.slice(-7) })

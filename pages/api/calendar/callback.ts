@@ -1,18 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { google } from 'googleapis'
-import { createClient } from '@supabase/supabase-js'
-import CryptoJS from 'crypto-js'
+import { getServiceClient } from '../../../lib/apiAuth'
+import { encryptToken } from '../../../lib/serverCrypto'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'your-secret-key-change-in-production'
-
-function encrypt(text: string): string {
-  return CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString()
-}
+const supabase = getServiceClient()
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -78,8 +69,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .upsert({
         user_id: userId,
         provider: 'google',
-        access_token: encrypt(tokens.access_token),
-        refresh_token: tokens.refresh_token ? encrypt(tokens.refresh_token) : null,
+        access_token: encryptToken(tokens.access_token),
+        refresh_token: tokens.refresh_token ? encryptToken(tokens.refresh_token) : null,
         expires_at: expiresAt,
         updated_at: new Date().toISOString()
       }, {

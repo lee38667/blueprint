@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { MoodCoachInsight, MoodLog } from '../types/models'
+import { authedFetch } from '../lib/apiClient'
 
 type Heuristics = {
   avgMood: number | null
@@ -54,7 +55,7 @@ export function useMentalCoach(logs: MoodLog[]) {
       setLoading(true)
       setError(null)
       try {
-        const res = await fetch('/api/mental/coach', {
+        const res = await authedFetch('/api/mental/coach', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ logs: recent })

@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useAIBrain } from './useAIBrain'
+import { authedFetch } from '../lib/apiClient'
 import type { DailyBriefing } from '../types/models'
 
 const CACHE_KEY = 'blueprint-daily-briefing'
@@ -38,7 +39,7 @@ export function useDailyBriefing() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('/api/daily-briefing', {
+      const res = await authedFetch('/api/daily-briefing', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ snapshot })

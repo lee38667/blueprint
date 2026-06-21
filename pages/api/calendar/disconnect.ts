@@ -1,30 +1,16 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { authGuard, getServiceClient } from '../../../lib/apiAuth'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'DELETE') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
+  const user = await authGuard(req, res, { name: 'calendar-disconnect' })
+  if (!user) return
+
   try {
-    const authHeader = req.headers.authorization
-    if (!authHeader) {
-      return res.status(401).json({ error: 'Not authenticated' })
-    }
-
-    const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token)
-
-    if (userError || !user) {
-      return res.status(401).json({ error: 'Invalid token' })
-    }
-
-    const { error } = await supabase
+    const { error } = await getServiceClient()
       .from('calendar_connections')
       .delete()
       .eq('user_id', user.id)

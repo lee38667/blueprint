@@ -5,6 +5,7 @@ import { useToastStore } from '../lib/toastStore'
 import { Validators } from '../lib/validation'
 import { handleError } from '../lib/errors'
 import { supabaseWithRetry } from '../lib/retry'
+import { authedFetch } from '../lib/apiClient'
 import type { NoteEntry } from '../types/models'
 
 interface NotePayload {
@@ -86,7 +87,7 @@ export function useNotes(){
   const analyzeNote = useCallback(async (note: NoteEntry, plaintext: string) => {
     try {
       setError(null)
-      const res = await fetch('/api/notes/analyze', {
+      const res = await authedFetch('/api/notes/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: plaintext, tags: note.tags ?? [] })

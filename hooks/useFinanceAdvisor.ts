@@ -7,6 +7,7 @@ import type {
   FinanceProjectionPoint,
   FinanceSummary
 } from '../types/models'
+import { authedFetch } from '../lib/apiClient'
 
 function buildProjections(summary: FinanceSummary | null, history: FinanceHistoryEntry[]): FinanceProjectionPoint[] {
   if (!history.length && !summary?.balance) return []
@@ -76,7 +77,7 @@ export function useFinanceAdvisor(summary: FinanceSummary | null, history: Finan
       setLoading(true)
       setError(null)
       try {
-        const res = await fetch('/api/finance/coach', {
+        const res = await authedFetch('/api/finance/coach', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ summary, history: history.slice(-6), logs: logs.slice(0, 10) })

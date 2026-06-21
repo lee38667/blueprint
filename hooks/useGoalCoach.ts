@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { Goal, GoalCoachInsight, Milestone, Subtask } from '../types/models'
+import { authedFetch } from '../lib/apiClient'
 
 export function useGoalCoach() {
   const [data, setData] = useState<GoalCoachInsight | null>(null)
@@ -11,7 +12,7 @@ export function useGoalCoach() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('/api/goals/coach', {
+      const res = await authedFetch('/api/goals/coach', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ goal, milestones: goalMilestones, subtasks: goalSubtasks })

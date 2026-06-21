@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { formatSnapshotForAI, AISnapshot } from '../../lib/aiSnapshot'
+import { authGuard } from '../../lib/apiAuth'
 
 type Success = {
   greeting: string
@@ -18,6 +19,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
+
+  const user = await authGuard(req, res, { name: 'daily-briefing', rateLimit: { limit: 15, windowMs: 60_000 } })
+  if (!user) return
 
   const apiKey = process.env.AI_API_KEY || process.env.GITHUB_DEVELOPER_AI_KEY
   if (!apiKey) {

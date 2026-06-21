@@ -72,7 +72,7 @@ interface DataStore {
   fetchHabits: () => Promise<void>
 }
 
-export const useDataStore = create<DataStore>((set, get) => ({
+export const useDataStore = create<DataStore>()((set, get) => ({
   tasks: [],
   tasksLoading: false,
   tasksLoaded: false,

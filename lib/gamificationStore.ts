@@ -27,7 +27,7 @@ interface GamificationStore {
   setLevelUp: (levelUp: LevelUpState | null) => void
 }
 
-export const useGamificationStore = create<GamificationStore>((set) => ({
+export const useGamificationStore = create<GamificationStore>()((set) => ({
   profile: null,
   quests: [],
   bodyWorkouts: [],

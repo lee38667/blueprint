@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useAIBrain } from './useAIBrain'
 import { supabase } from '../lib/supabaseClient'
+import { authedFetch } from '../lib/apiClient'
 
 export interface ChatMessage {
   id: string
@@ -244,7 +245,7 @@ export function useChat() {
 
     try {
       abortRef.current = new AbortController()
-      const res = await fetch('/api/chat', {
+      const res = await authedFetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

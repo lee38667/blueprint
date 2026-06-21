@@ -167,8 +167,8 @@ The system currently uses `AI_API_KEY` as the primary key and falls back to `GIT
 
 ## Tech Stack
 
-- Next.js 13
-- React 18
+- Next.js 16 (Turbopack)
+- React 19
 - TypeScript
 - Tailwind CSS
 - Framer Motion
@@ -299,8 +299,11 @@ npm run lint
 - Supabase-authenticated multi-user access
 - Row Level Security across core tables
 - User-scoped policies for owned records
+- **All AI and data API routes require a verified Supabase access token** (`Authorization: Bearer`), enforced by a shared `lib/apiAuth.ts` guard. Client calls go through `lib/apiClient.ts` (`authedFetch`).
+- **Per-user rate limiting** on AI endpoints to prevent abuse of the AI provider key
+- **User-scoped server-side calendar access** (`lib/serverCalendar.ts`) — the service-role client is only ever queried with a verified user id, never unscoped
+- **Fail-closed encryption** (`lib/serverCrypto.ts`) — stored OAuth tokens are encrypted with `ENCRYPTION_KEY`, which must be set (no hardcoded fallback)
 - Soft delete support for notes, tasks, goals, motivations, content, and finance logs
-- AES-based encryption helpers for sensitive content and stored calendar tokens
 - Private document storage with signed URL sharing
 
 ### Core data domains
