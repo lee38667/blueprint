@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState, useEffect, useCallback, type ReactNode } from "react"
+import { useState, useEffect, useCallback, useMemo, type ReactNode } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 
@@ -30,7 +30,7 @@ function Component({
   const [activeIndex, setActiveIndex] = useState(0)
 
   // Defensive check for items
-  const safeItems = items || []
+  const safeItems = useMemo(() => items || [], [items])
   const itemCount = safeItems.length
 
   const angleStep = itemCount > 0 ? 360 / itemCount : 0

@@ -42,7 +42,9 @@ export function useTasks() {
     try {
       setError(null)
       const current = tasks.find((task) => task.id === id)
-      await supabaseWithRetry(() => supabase.from('tasks').update(patch).eq('id', id))
+      // Stamp updated_at so analytics can use it as a completion timestamp.
+      const stampedPatch = { ...patch, updated_at: new Date().toISOString() }
+      await supabaseWithRetry(() => supabase.from('tasks').update(stampedPatch).eq('id', id))
       if (patch.status === 'done' && current?.status !== 'done') {
         const reward = await maybeCompleteQuest({ sourceType: 'task', linkedId: id })
         if (reward?.narrative) {

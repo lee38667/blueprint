@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Fuse from 'fuse.js'
 import { useRouter } from 'next/router'
@@ -16,6 +16,23 @@ interface SearchItem {
   href?: string
 }
 
+const BASE_ITEMS: SearchItem[] = [
+  { id: '/dashboard', title: 'Dashboard', type: 'Page' },
+  { id: '/notes', title: 'Notes', type: 'Page' },
+  { id: '/life-areas', title: 'Life Areas', type: 'Page' },
+  { id: '/gym', title: 'Gym', type: 'Page' },
+  { id: '/finance', title: 'Finance', type: 'Page' },
+  { id: '/skills', title: 'Skills', type: 'Page' },
+  { id: '/content', title: 'Content', type: 'Page' },
+  { id: '/motivation', title: 'Motivation', type: 'Page' },
+  { id: '/tasks', title: 'Tasks', type: 'Page' },
+  { id: '/goals', title: 'Goals', type: 'Page' },
+  { id: '/analytics', title: 'Analytics', type: 'Page' },
+  { id: '/mental', title: 'Mental Health', type: 'Page' },
+  { id: '/notifications', title: 'Notifications', type: 'Page' },
+  { id: '/settings', title: 'Settings', type: 'Page' }
+]
+
 export default function VSCodeSearch({ onClose }: { onClose?: () => void }) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchItem[]>([])
@@ -28,22 +45,6 @@ export default function VSCodeSearch({ onClose }: { onClose?: () => void }) {
   const { goals } = useGoals()
   const { notes } = useNotes()
   const { favorites } = useScriptureFavorites()
-
-  const baseItems: SearchItem[] = [
-    { id: '/dashboard', title: 'Dashboard', type: 'Page' },
-    { id: '/notes', title: 'Notes', type: 'Page' },
-    { id: '/life-areas', title: 'Life Areas', type: 'Page' },
-    { id: '/gym', title: 'Gym', type: 'Page' },
-    { id: '/finance', title: 'Finance', type: 'Page' },
-    { id: '/skills', title: 'Skills', type: 'Page' },
-    { id: '/content', title: 'Content', type: 'Page' },
-    { id: '/motivation', title: 'Motivation', type: 'Page' },
-    { id: '/tasks', title: 'Tasks', type: 'Page' },
-    { id: '/goals', title: 'Goals', type: 'Page' },
-    { id: '/mental', title: 'Mental Health', type: 'Page' },
-    { id: '/notifications', title: 'Notifications', type: 'Page' },
-    { id: '/settings', title: 'Settings', type: 'Page' }
-  ]
 
   const dataset = useMemo(() => {
     const taskItems: SearchItem[] = tasks.map(t => ({
@@ -74,8 +75,14 @@ export default function VSCodeSearch({ onClose }: { onClose?: () => void }) {
       type: 'Scripture',
       href: '/dashboard'
     }))
-    return [...baseItems, ...taskItems, ...goalItems, ...noteItems, ...scriptureItems]
+    return [...BASE_ITEMS, ...taskItems, ...goalItems, ...noteItems, ...scriptureItems]
   }, [tasks, goals, notes, favorites])
+
+  const handleSelect = useCallback((id: string) => {
+    const target = results.find(r => r.id === id)
+    router.push(target?.href ?? target?.id ?? id)
+    if (onClose) onClose()
+  }, [results, router, onClose])
 
   useEffect(() => {
     const fuse = new Fuse(dataset, { keys: ['title', 'subtitle'], threshold: 0.3 })
@@ -108,19 +115,13 @@ export default function VSCodeSearch({ onClose }: { onClose?: () => void }) {
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [results, selectedIndex])
+  }, [results, selectedIndex, handleSelect])
 
   // Scroll selected item into view
   useEffect(() => {
     const el = listRef.current?.children[selectedIndex] as HTMLElement
     el?.scrollIntoView({ block: 'nearest' })
   }, [selectedIndex])
-
-  const handleSelect = (id: string) => {
-    const target = results.find(r => r.id === id)
-    router.push(target?.href ?? target?.id ?? id)
-    if (onClose) onClose()
-  }
 
   return (
     <div

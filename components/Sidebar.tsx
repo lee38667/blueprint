@@ -92,6 +92,7 @@ const navSections: NavSection[] = [
       { href: '/tasks', label: 'Tasks', Icon: Icons.Check },
       { href: '/goals', label: 'Goals', Icon: Icons.Target },
       { href: '/habits', label: 'Habits', Icon: Icons.Habit },
+      { href: '/analytics', label: 'Analytics', Icon: Icons.Analytics },
       { href: '/calendar', label: 'Calendar', Icon: Icons.Calendar },
     ],
   },

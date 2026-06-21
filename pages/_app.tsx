@@ -67,6 +67,9 @@ export default function MyApp({ Component, pageProps }: AppProps) {
       cancelled = true
       subscription.unsubscribe()
     }
+    // Intentionally keyed on pathname only: re-running on every router identity
+    // change would needlessly tear down and re-create the auth subscription.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.pathname])
 
   if (!authReady && !isPublicRoute) {

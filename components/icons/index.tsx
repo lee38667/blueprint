@@ -319,6 +319,16 @@ export const ChatIcon = (props: IconProps) => (
   </IconWrapper>
 )
 
+export const AnalyticsIcon = (props: IconProps) => (
+  <IconWrapper {...props}>
+    <line x1="3" y1="3" x2="3" y2="21" />
+    <line x1="3" y1="21" x2="21" y2="21" />
+    <rect x="7" y="12" width="3" height="6" />
+    <rect x="12" y="8" width="3" height="10" />
+    <rect x="17" y="5" width="3" height="13" />
+  </IconWrapper>
+)
+
 export const HabitIcon = (props: IconProps) => (
   <IconWrapper {...props}>
     <polyline points="23 4 23 10 17 10" />
@@ -384,5 +394,6 @@ export const Icons = {
   ExternalLink: ExternalLinkIcon,
   Habit: HabitIcon,
   Chat: ChatIcon,
+  Analytics: AnalyticsIcon,
   X: CloseIcon
 }

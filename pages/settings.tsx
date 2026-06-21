@@ -5,8 +5,8 @@ import { useStore, themes, type ThemeName } from '../lib/store'
 import { useCalendar } from '../hooks/useCalendar'
 import { useEffect, useState } from 'react'
 import { useProfile, type ProfilePayload } from '../hooks/useProfile'
-import { useMfa } from '../hooks/useMfa'
 import Button from '../components/Button'
+import { Icons } from '../components/icons'
 
 const DASHBOARD_ZONES = ['briefing', 'metrics', 'body', 'gym', 'motivation', 'ai']
 const WEEK_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -28,9 +28,7 @@ export default function SettingsPage() {
   const setHighContrastMode = useStore((state) => state.setHighContrastMode)
   const { connected, loading, connect, disconnect } = useCalendar()
   const { currentProfile, loading: profileLoading, saving: profileSaving, error: profileError, saveProfile } = useProfile()
-  const mfa = useMfa()
   const [profileForm, setProfileForm] = useState<ProfilePayload>(currentProfile)
-  const [mfaCode, setMfaCode] = useState('')
 
   useEffect(() => {
     setProfileForm(currentProfile)
@@ -64,13 +62,6 @@ export default function SettingsPage() {
   const handleSaveProfile = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     await saveProfile(profileForm)
-  }
-
-  const verifyMfa = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (!mfaCode.trim()) return
-    await mfa.verifyEnrollment(mfaCode.trim())
-    setMfaCode('')
   }
 
   return (
@@ -188,10 +179,11 @@ export default function SettingsPage() {
                     </div>
                     {theme === key && (
                       <div
-                        className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center text-xs"
+                        className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center"
                         style={{ background: config.accent, color: config.accentText }}
+                        aria-label="Selected theme"
                       >
-                        ?
+                        <Icons.Check size="sm" />
                       </div>
                     )}
                   </button>
@@ -262,44 +254,6 @@ export default function SettingsPage() {
 
         <Card title="Security">
           <div className="space-y-4">
-            <div className="rounded-xl p-4" style={{ background: 'var(--theme-surface)', border: '1px solid var(--theme-border)' }}>
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                <div>
-                  <div className="text-sm" style={{ color: 'var(--theme-text-dim)' }}>Two-Factor Authentication</div>
-                  <div className="text-xs" style={{ color: 'var(--theme-text-muted)' }}>
-                    {mfa.loading ? 'Checking MFA status...' : mfa.enabled ? 'Enabled with authenticator app verification.' : 'Not enabled. Add an authenticator app for stronger account protection.'}
-                  </div>
-                </div>
-                {!mfa.loading && !mfa.enabled && !mfa.enrollment && (
-                  <Button variant="primary" loading={mfa.working} onClick={mfa.startEnrollment}>Enable MFA</Button>
-                )}
-                {!mfa.loading && mfa.enabled && (
-                  <Button variant="danger" loading={mfa.working} onClick={() => mfa.unenrollFactor(mfa.factors[0].id)}>Disable MFA</Button>
-                )}
-              </div>
-
-              {mfa.enrollment && (
-                <form onSubmit={verifyMfa} className="mt-4 space-y-3">
-                  <div className="grid grid-cols-1 md:grid-cols-[160px_1fr] gap-4">
-                    <div className="rounded-lg bg-white p-2">
-                      <img src={mfa.enrollment.qrCode} alt="Authenticator QR code" className="w-full h-auto" />
-                    </div>
-                    <div className="space-y-3">
-                      <p className="text-sm" style={{ color: 'var(--theme-text-dim)' }}>Scan the QR code, then enter the 6-digit code from your authenticator app.</p>
-                      <div className="text-xs break-all rounded-lg p-3" style={{ background: 'var(--theme-card-bg)', color: 'var(--theme-text-muted)', border: '1px solid var(--theme-border)' }}>
-                        Secret: {mfa.enrollment.secret}
-                      </div>
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <input value={mfaCode} onChange={(event) => setMfaCode(event.target.value.replace(/\D/g, '').slice(0, 6))} className="input-base" inputMode="numeric" placeholder="000000" />
-                        <Button type="submit" variant="primary" loading={mfa.working} disabled={mfaCode.length < 6}>Verify</Button>
-                        <Button type="button" variant="outline" onClick={mfa.cancelEnrollment}>Cancel</Button>
-                      </div>
-                    </div>
-                  </div>
-                </form>
-              )}
-              {mfa.error && <p className="text-xs text-red-400 mt-3">{mfa.error}</p>}
-            </div>
             <div>
               <div className="text-sm mb-2" style={{ color: 'var(--theme-text-dim)' }}>
                 Session Timeout (minutes)
@@ -312,6 +266,9 @@ export default function SettingsPage() {
                 onChange={(event) => setSessionTimeout(parseInt(event.target.value, 10) || 15)}
                 className="input-base w-32"
               />
+              <p className="text-xs mt-2" style={{ color: 'var(--theme-text-muted)' }}>
+                You&apos;ll be signed out automatically after this period of inactivity.
+              </p>
             </div>
           </div>
         </Card>

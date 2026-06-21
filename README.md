@@ -131,8 +131,15 @@ Blueprint is a personal life management system built with Next.js, TypeScript, T
 - Notification center for reminders with snooze and done states
 - AI-supported daily briefing and focus support across the app
 
+### Gamification
+- Daily/periodic quests with AI-assisted generation and a deterministic fallback
+- XP and level progression with level-up modal celebration
+- Gamification radar and dashboard card surfacing progress across life areas
+- Server-side progress application tied to real actions (e.g. logged body workouts)
+
 ### Skills and content records
 - Skills tracking view with skill level badges
+- Full skill CRUD (create, update, delete) with level and category
 - Content/document records stored in Supabase
 - Resume/CV-specific versioning support
 
@@ -275,6 +282,11 @@ npm run lint
 - `POST /api/calendar/create-event`
 - `DELETE /api/calendar/disconnect`
 
+### Gamification
+- `GET /api/gamification/quests`
+- `POST /api/gamification/complete-quest`
+- `POST /api/workouts/log-body`
+
 ### Utility and integration
 - `GET /api/scripture/search`
 - `POST /api/notifications/evaluate`
@@ -317,11 +329,12 @@ Implemented now:
 - AI-generated insights across notes, goals, finance, body stats, mental health, daily briefing, and system-wide planning
 - Google Calendar connection and event creation
 - Supabase-backed storage and sharing for documents
+- Gamification with quests, XP/levels, and a progress radar
+- Skills CRUD and profile customization
+- Email/password authentication (single-factor)
 - Search, pagination, confirmations, theming, and responsive UI support
 
 Still lightweight or partial:
-- Skills page is currently read-focused
-- Two-factor auth and profile customization are settings placeholders at the UI layer
 - Some CSV export helpers exist in the codebase but are not exposed on every related page yet
 
 ## License

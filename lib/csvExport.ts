@@ -84,6 +84,34 @@ export function exportSkillsToCSV(skills: any[]): void {
   downloadCSV(`blueprint-skills-${timestamp}.csv`, csv)
 }
 
+export function exportReportToCSV(report: any): void {
+  const rows: Array<Record<string, any>> = []
+  rows.push({ section: 'meta', metric: 'period', value: report.period })
+  rows.push({ section: 'meta', metric: 'range_start', value: report.rangeStart })
+  rows.push({ section: 'meta', metric: 'range_end', value: report.rangeEnd })
+
+  const t = report.tasks ?? {}
+  Object.keys(t)
+    .filter((k) => typeof t[k] === 'number')
+    .forEach((k) => rows.push({ section: 'tasks', metric: k, value: t[k] }))
+
+  const h = report.habits ?? {}
+  rows.push({ section: 'habits', metric: 'maintainedCount', value: h.maintainedCount })
+  rows.push({ section: 'habits', metric: 'atRiskCount', value: h.atRiskCount })
+  rows.push({ section: 'habits', metric: 'overallAdherence', value: h.overallAdherence })
+  ;(h.rows ?? []).forEach((row: any) => {
+    rows.push({ section: 'habit', metric: row.name, value: `${row.adherence}% (${row.completed}/${row.expected}), streak ${row.currentStreak}, ${row.status}` })
+  })
+
+  ;(report.concerns ?? []).forEach((c: any) => {
+    rows.push({ section: `concern:${c.kind}`, metric: c.title, value: `${c.severity} — ${c.detail}` })
+  })
+
+  const csv = convertToCSV(rows, ['section', 'metric', 'value'])
+  const timestamp = new Date().toISOString().split('T')[0]
+  downloadCSV(`blueprint-${report.period}-report-${timestamp}.csv`, csv)
+}
+
 export function exportWorkoutLogsToCSV(logs: any[], workouts: any[]): void {
   const enriched = logs.map((log) => {
     const w = workouts.find((wk) => wk.id === log.workout_id)

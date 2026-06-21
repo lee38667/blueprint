@@ -8,6 +8,7 @@ export interface Task {
   due_date: string | null
   goal_id: string | null
   created_at: string
+  updated_at?: string | null
 }
 
 export interface Goal {
@@ -160,6 +161,66 @@ export interface HabitLog {
   habit_id: string
   logged_at: string
   completed: boolean
+}
+
+/* ─── Analytics / periodic reports ─── */
+
+export type ReportPeriod = 'week' | 'month'
+
+export interface TaskReportMetrics {
+  completedInPeriod: number
+  createdInPeriod: number
+  completionRate: number // % of plate (completed vs completed + open backlog) over the period
+  avgCompletionsPerDay: number
+  activeCount: number
+  overdueCount: number
+  completedOnTime: number
+  completedLate: number
+  onTimeRate: number // % of due-dated completions that landed on or before the due date
+  trendLabels: string[]
+  trendCompletions: number[]
+}
+
+export interface HabitReportRow {
+  habitId: string
+  name: string
+  frequency: 'daily' | 'weekly'
+  expected: number
+  completed: number
+  adherence: number // 0..100
+  currentStreak: number
+  status: 'maintained' | 'building' | 'at_risk'
+}
+
+export interface HabitReportMetrics {
+  rows: HabitReportRow[]
+  maintainedCount: number
+  atRiskCount: number
+  overallAdherence: number
+}
+
+export type ConcernSeverity = 'high' | 'medium' | 'low'
+export type ConcernKind = 'overdue' | 'completed_late' | 'stalled' | 'no_due_date'
+
+export interface ConcernItem {
+  id: string
+  kind: ConcernKind
+  title: string
+  detail: string
+  severity: ConcernSeverity
+  days?: number
+}
+
+export interface PeriodReport {
+  period: ReportPeriod
+  rangeStart: string
+  rangeEnd: string
+  daysInPeriod: number
+  generatedAt: string
+  headline: string
+  tasks: TaskReportMetrics
+  habits: HabitReportMetrics
+  concerns: ConcernItem[]
 }
 
 export interface DailyBriefing {

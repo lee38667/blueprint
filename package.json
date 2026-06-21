@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:smoke": "node tests/selenium/smoke.test.js",
+    "test:analytics": "tsc lib/analyticsEngine.ts --outDir .tmp-test --target es2020 --module es2020 --moduleResolution node --skipLibCheck --esModuleInterop && node tests/analytics/engine.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.0.0",
@@ -34,10 +36,12 @@
     "@types/node": "25.0.3",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
+    "@types/selenium-webdriver": "^4.35.6",
     "autoprefixer": "^10.4.14",
     "baseline-browser-mapping": "^2.10.10",
     "eslint-config-next": "13.5.6",
     "postcss": "^8.4.24",
+    "selenium-webdriver": "^4.45.0",
     "tailwindcss": "^3.4.5",
     "typescript": "^5.1.6"
   }

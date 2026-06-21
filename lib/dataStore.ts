@@ -84,7 +84,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
       const { data } = await supabaseWithRetry(() =>
         supabase
           .from('tasks')
-          .select('id,title,description,priority,status,project,due_date,goal_id,created_at')
+          .select('id,title,description,priority,status,project,due_date,goal_id,created_at,updated_at')
           .order('created_at', { ascending: false })
       )
 

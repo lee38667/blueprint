@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import Layout from '../../components/Layout'
 import Card from '../../components/Card'
 import Button from '../../components/Button'
@@ -198,9 +199,12 @@ export default function TasksPage() {
         <ConfirmDialog {...confirmDialog} />
         <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <h1 className="heading-xl">Tasks</h1>
-          <Button variant="outline" disabled={tasks.length === 0} onClick={() => exportTasksToCSV(tasks)}>
-            Export CSV
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link href="/analytics" className="btn-outline btn-sm">View Analytics</Link>
+            <Button variant="outline" disabled={tasks.length === 0} onClick={() => exportTasksToCSV(tasks)}>
+              Export CSV
+            </Button>
+          </div>
         </header>
 
         <Card title="ADHD-Friendly Start Lane" subtitle={`Energy profile: ${energy.label}`}>
