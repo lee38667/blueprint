@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import Layout from '../../components/Layout'
+import PageContainer from '../../components/PageContainer'
 import Card from '../../components/Card'
 import Button from '../../components/Button'
 import MetricCard from '../../components/MetricCard'
+import EmptyState from '../../components/EmptyState'
 import { PriorityBadge, TaskStatusBadge } from '../../components/StatusBadge'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import AICopilotInsightsCard from '../../components/AICopilotInsightsCard'
@@ -187,7 +189,7 @@ export default function TasksPage() {
   return (
     <Layout>
       <RewardBurst trigger={rewardTrigger} />
-      <div className="max-w-7xl mx-auto space-y-6">
+      <PageContainer>
         <ConfirmDialog {...confirmDialog} />
         <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <h1 className="heading-xl">Tasks</h1>
@@ -358,6 +360,14 @@ export default function TasksPage() {
 
         {loading ? (
           <Card><CardSkeleton className="h-24" /></Card>
+        ) : filtered.length === 0 ? (
+          <Card>
+            <EmptyState
+              variant="compact"
+              title={tasks.length === 0 ? 'No tasks yet' : 'No tasks match these filters'}
+              description={tasks.length === 0 ? 'Add your first task above to get started.' : 'Try clearing the status, priority, or project filters.'}
+            />
+          </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {infinite.visibleItems.map((task) => {
@@ -440,7 +450,7 @@ export default function TasksPage() {
             </div>
           </>
         )}
-      </div>
+      </PageContainer>
     </Layout>
   )
 }

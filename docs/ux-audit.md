@@ -89,10 +89,11 @@ a cross-link from the Tasks page so the deeper report is one tap away.
 | P1 | Migrate Tasks/Dashboard stat blocks to `MetricCard` | ✅ Done — Tasks (Weekly Summary, Productivity Pulse) + Dashboard "Today at a glance" |
 | P1 | Add glyphs to color-coded badges | ✅ Done — `PriorityBadge`/`TaskStatusBadge` pair color with icon + label |
 | P2 | Standardize page titles on `.heading-xl` | ✅ Done — settings, goals, finance, notes migrated (auth/demo screens intentionally separate) |
-| P2 | Single page-shell wrapper in `Layout` | ⚠️ Recommended |
-| P2 | Route all interactive controls through `Button`/`.focus-ring` | ⚠️ Recommended |
-| P3 | Standardize empty states on `EmptyState` | ⚠️ Recommended |
-| P3 | Tighten Tasks page density / Focus mode | ⚠️ Recommended |
+| P2 | Single page-shell wrapper | ✅ Done — `PageContainer` adopted on dashboard, tasks, analytics, settings, goals, finance |
+| P2 | Keyboard focus indicator on all controls | ✅ Done — global `:focus-visible` baseline ring in `globals.css` (custom `.btn-*` rings preserved) |
+| P3 | Standardize empty states on `EmptyState` | ✅ Done — dashboard (quick tasks, body metrics) + Tasks list empty/no-match states |
+| P3 | Tighten Tasks page density / Focus mode | ⚠️ Recommended (deferred — larger UX change) |
+| — | Adopt `PageContainer` on remaining pages | ⚠️ Incremental — pattern established, migrate the rest opportunistically |
 
 ---
 
@@ -108,3 +109,6 @@ a cross-link from the Tasks page so the deeper report is one tap away.
 - ✅ Fixed the broken theme-picker glyph.
 - ✅ Page titles standardized on `.heading-xl` across main app pages.
 - ✅ Sidebar + search + Tasks cross-link to Analytics.
+- ✅ `PageContainer` page-shell for consistent width + vertical rhythm.
+- ✅ Global keyboard `:focus-visible` ring for all interactive controls.
+- ✅ `EmptyState` adopted for dashboard + Tasks empty states.

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import Layout from '../../components/Layout'
+import PageContainer from '../../components/PageContainer'
 import Card from '../../components/Card'
 import Button from '../../components/Button'
 import AICopilotInsightsCard from '../../components/AICopilotInsightsCard'
@@ -44,7 +45,7 @@ export default function GoalsPage() {
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto space-y-6 py-4">
+      <PageContainer className="py-4">
         <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <h1 className="heading-xl">Long-term Goals</h1>
           <Button variant="outline" disabled={goals.length === 0} onClick={() => exportGoalsToCSV(goals)}>
@@ -305,7 +306,7 @@ export default function GoalsPage() {
             )
           })}
         </div>
-      </div>
+      </PageContainer>
     </Layout>
   )
 }

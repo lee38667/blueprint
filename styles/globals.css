@@ -493,6 +493,20 @@ select, option {
   box-shadow: 0 0 0 2px var(--theme-bg), 0 0 0 4px var(--theme-accent);
 }
 
+/* Baseline keyboard-focus ring for interactive elements that don't define
+   their own. The custom .btn-* / .ring-soft rules use a higher-specificity
+   :focus-visible selector, so they keep their bespoke rings and are unaffected. */
+button:focus-visible,
+a:focus-visible,
+[role='button']:focus-visible,
+[role='tab']:focus-visible,
+[tabindex]:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--theme-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import Layout from '../../components/Layout'
+import PageContainer from '../../components/PageContainer'
 import Card from '../../components/Card'
 import Button from '../../components/Button'
 import MetricCard from '../../components/MetricCard'
@@ -66,7 +67,7 @@ export default function AnalyticsPage() {
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto space-y-6">
+      <PageContainer>
         <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="heading-xl">Analytics</h1>
@@ -254,7 +255,7 @@ export default function AnalyticsPage() {
             </Card>
           </>
         )}
-      </div>
+      </PageContainer>
     </Layout>
   )
 }

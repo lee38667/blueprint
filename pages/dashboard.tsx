@@ -1,7 +1,9 @@
 ﻿import React, { useMemo, useState, useEffect, useRef } from 'react'
 import Layout from '../components/Layout'
+import PageContainer from '../components/PageContainer'
 import Card from '../components/Card'
 import MetricCard from '../components/MetricCard'
+import EmptyState from '../components/EmptyState'
 import DailyFocusCard from '../components/DailyFocusCard'
 import AICopilotCard from '../components/AICopilotCard'
 import ChartComponent from '../components/Chart'
@@ -123,7 +125,7 @@ export default function DashboardPage() {
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
+      <PageContainer className="md:space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-4 md:mb-8">
           <div>
             <h1 className="heading-xl mb-1">Dashboard</h1>
@@ -206,7 +208,7 @@ export default function DashboardPage() {
             <Card title="Quick Tasks">
               <div className="space-y-2">
                 {quickTasks.length === 0 ? (
-                  <div className="subtle-muted text-sm">No open tasks. Add some on Tasks.</div>
+                  <EmptyState variant="compact" title="No open tasks" description="Add some on the Tasks page." />
                 ) : (
                   quickTasks.map((task) => (
                     <div key={task.id} className="flex items-center justify-between p-2 rounded-xl" style={{ border: '1px solid var(--theme-border)', background: 'var(--theme-surface)' }}>
@@ -308,7 +310,7 @@ export default function DashboardPage() {
             <Card title="Recent Body Metrics">
               <div className="space-y-2">
                 {recentStats.length === 0 ? (
-                  <div className="subtle-muted text-sm">No entries yet.</div>
+                  <EmptyState variant="compact" title="No entries yet" description="Log weight, sleep, water, or stress to start a trend." />
                 ) : (
                   recentStats.map((stat) => (
                     <div key={stat.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 rounded text-sm" style={{ border: '1px solid var(--theme-border)', background: 'var(--theme-surface)' }}>
@@ -361,7 +363,7 @@ export default function DashboardPage() {
             </div>
           </section>
         )}
-      </div>
+      </PageContainer>
     </Layout>
   )
 }

@@ -1,4 +1,5 @@
 import Layout from '../components/Layout'
+import PageContainer from '../components/PageContainer'
 import Card from '../components/Card'
 import Toggle from '../components/Toggle'
 import { useStore, themes, type ThemeName } from '../lib/store'
@@ -66,7 +67,7 @@ export default function SettingsPage() {
 
   return (
     <Layout>
-      <div className="max-w-3xl mx-auto space-y-6 py-4">
+      <PageContainer width="narrow" className="py-4">
         <h1 className="heading-xl">Settings</h1>
 
         <Card title="Profile" subtitle="Identity, planning defaults, and coaching context.">
@@ -270,7 +271,7 @@ export default function SettingsPage() {
             </div>
           </div>
         </Card>
-      </div>
+      </PageContainer>
     </Layout>
   )
 }
