@@ -5,7 +5,7 @@ node_modules/
 .yarn/unplugged
 .yarn/build-state.yml
 .npm
-package-lock.json
+# package-lock.json is committed for reproducible installs.
 pnpm-lock.yaml
 
 # Next.js build outputs
