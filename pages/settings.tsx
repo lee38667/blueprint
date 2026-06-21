@@ -214,7 +214,7 @@ export default function SettingsPage() {
                 max={18}
                 value={fontSize}
                 onChange={(event) => setFontSize(parseInt(event.target.value, 10))}
-                className="w-full accent-[var(--theme-accent)]"
+                className="w-full accent-(--theme-accent)"
                 style={{ accentColor: 'var(--theme-accent)' }}
               />
               <div className="text-xs mt-1" style={{ color: 'var(--theme-text-muted)' }}>

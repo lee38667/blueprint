@@ -196,14 +196,14 @@ function ChatSidebar({
         initial={false}
         animate={{ x: isOpen ? 0 : -320 }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="fixed md:relative z-50 md:z-auto top-0 left-0 h-full md:h-auto w-[280px] flex-shrink-0 flex flex-col"
+        className="fixed md:relative z-50 md:z-auto top-0 left-0 h-full md:h-auto w-[280px] shrink-0 flex flex-col"
         style={{
           background: 'var(--theme-card-bg)',
           borderRight: '1px solid var(--theme-border)',
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-3 flex-shrink-0" style={{ borderBottom: '1px solid var(--theme-border)' }}>
+        <div className="flex items-center justify-between p-3 shrink-0" style={{ borderBottom: '1px solid var(--theme-border)' }}>
           <button
             onClick={onNew}
             className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all flex-1 mr-2"
@@ -225,7 +225,7 @@ function ChatSidebar({
         </div>
 
         {/* Search */}
-        <div className="px-3 pt-3 pb-2 flex-shrink-0">
+        <div className="px-3 pt-3 pb-2 shrink-0">
           <div
             className="flex items-center gap-2 px-3 py-2 rounded-lg"
             style={{ background: 'var(--theme-input-bg)', border: '1px solid var(--theme-border)' }}
@@ -242,7 +242,7 @@ function ChatSidebar({
         </div>
 
         {/* Tabs: Chats / Memories */}
-        <div className="flex px-3 gap-1 flex-shrink-0" style={{ borderBottom: '1px solid var(--theme-border)' }}>
+        <div className="flex px-3 gap-1 shrink-0" style={{ borderBottom: '1px solid var(--theme-border)' }}>
           <button
             onClick={() => setShowMemories(false)}
             className="flex-1 py-2 text-xs font-medium transition-colors rounded-t-lg"
@@ -302,9 +302,9 @@ function ChatSidebar({
                           if (conv.id !== conversationId) e.currentTarget.style.background = 'transparent'
                         }}
                       >
-                        <Icons.Chat size="sm" className="flex-shrink-0 opacity-50" />
+                        <Icons.Chat size="sm" className="shrink-0 opacity-50" />
                         <span className="flex-1 text-sm truncate">{conv.title}</span>
-                        <span className="text-[10px] flex-shrink-0 opacity-50">{relativeTime(conv.updated_at)}</span>
+                        <span className="text-[10px] shrink-0 opacity-50">{relativeTime(conv.updated_at)}</span>
 
                         {/* Delete button */}
                         {deletingId === conv.id ? (
@@ -327,7 +327,7 @@ function ChatSidebar({
                         ) : (
                           <button
                             onClick={(e) => handleDelete(e, conv.id)}
-                            className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity p-0.5"
+                            className="opacity-0 group-hover:opacity-60 hover:opacity-100! transition-opacity p-0.5"
                             style={{ color: 'var(--theme-text-muted)' }}
                           >
                             <Icons.Trash size="sm" />
@@ -379,7 +379,7 @@ function ChatSidebar({
                       </div>
                       <button
                         onClick={() => onDeleteMemory(mem.id)}
-                        className="opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity p-0.5 mt-0.5 flex-shrink-0"
+                        className="opacity-0 group-hover:opacity-60 hover:opacity-100! transition-opacity p-0.5 mt-0.5 shrink-0"
                         style={{ color: 'var(--theme-text-muted)' }}
                       >
                         <Icons.X size="sm" />
@@ -465,7 +465,7 @@ export default function ChatPage() {
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Header */}
-          <div className="flex items-center justify-between py-3 px-3 md:px-4 flex-shrink-0">
+          <div className="flex items-center justify-between py-3 px-3 md:px-4 shrink-0">
             <div className="flex items-center gap-3">
               {/* Sidebar toggle */}
               <button
@@ -657,7 +657,7 @@ export default function ChatPage() {
           </div>
 
           {/* Input Area */}
-          <div className="flex-shrink-0 pb-4 pt-2 px-3 md:px-4">
+          <div className="shrink-0 pb-4 pt-2 px-3 md:px-4">
             <form onSubmit={handleSubmit} className="relative">
               <div
                 className="rounded-2xl overflow-hidden transition-all"

@@ -21,7 +21,7 @@ export default function DailyBriefingCard() {
           </div>
           <button
             onClick={refresh}
-            className="p-1.5 rounded-lg transition-colors hover:bg-[var(--theme-surface-hover)]"
+            className="p-1.5 rounded-lg transition-colors hover:bg-(--theme-surface-hover)"
             style={{ color: 'var(--theme-text-muted)' }}
             title="Refresh briefing"
           >
@@ -45,7 +45,7 @@ export default function DailyBriefingCard() {
                   {briefing.priorityTasks.map((task, idx) => (
                     <div key={idx} className="flex items-center gap-2 text-sm">
                       <span
-                        className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                        className="w-1.5 h-1.5 rounded-full shrink-0"
                         style={{
                           background: task.priority === 'high' ? '#f87171' : task.priority === 'normal' ? 'var(--theme-accent)' : '#14b8a6'
                         }}

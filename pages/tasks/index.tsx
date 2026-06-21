@@ -413,7 +413,7 @@ export default function TasksPage() {
                                 <p className="text-sm" style={{ color: 'var(--theme-text)' }}>{step.title}</p>
                                 <p className="text-xs mt-1" style={{ color: 'var(--theme-text-muted)' }}>{step.minutes}-minute step</p>
                               </div>
-                              <div className="flex gap-2 flex-shrink-0">
+                              <div className="flex gap-2 shrink-0">
                                 {!isDone && (
                                   <Button size="sm" variant={isActive ? 'secondary' : 'outline'} onClick={() => startMicroStep(task.id, step.id)}>
                                     {isActive ? 'In motion' : 'Start'}

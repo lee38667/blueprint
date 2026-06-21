@@ -121,7 +121,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 0.25 }}
                     transition={{ duration: 0.8, delay: 0.2 }}
-                    className="absolute -top-24 right-10 w-[28rem] h-[28rem] rounded-full blur-3xl accent-gradient"
+                    className="absolute -top-24 right-10 w-md h-112 rounded-full blur-3xl accent-gradient"
                   />
                 </div>
                 <Component {...pageProps} />

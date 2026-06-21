@@ -216,7 +216,7 @@ export default function DashboardPage() {
                         <div className="font-medium truncate text-sm">{task.title}</div>
                         <div className="text-xs" style={{ color: 'var(--theme-text-muted)' }}>{task.project || 'General'} | {task.priority}</div>
                       </div>
-                      <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+                      <div className="flex items-center gap-2 ml-2 shrink-0">
                         {task.status !== 'in_progress' && (
                           <button className="btn-glow px-2 py-1 rounded text-xs" onClick={() => updateTask(task.id, { status: 'in_progress' })}>Start</button>
                         )}

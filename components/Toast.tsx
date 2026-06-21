@@ -60,13 +60,13 @@ export function Toast({ id, message, type, onDismiss, duration = 3000 }: ToastPr
         border: `1px solid ${config.border}`,
       }}
     >
-      <span className="text-lg font-bold flex-shrink-0" style={{ color: config.text }}>{config.icon}</span>
+      <span className="text-lg font-bold shrink-0" style={{ color: config.text }}>{config.icon}</span>
       <div className="flex-1">
         <p className="text-sm" style={{ color: config.text }}>{message}</p>
       </div>
       <button
         onClick={onDismiss}
-        className="flex-shrink-0 text-lg leading-none transition-colors"
+        className="shrink-0 text-lg leading-none transition-colors"
         style={{ color: 'var(--theme-text-muted)' }}
         aria-label="Dismiss notification"
       >

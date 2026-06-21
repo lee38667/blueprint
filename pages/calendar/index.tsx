@@ -500,7 +500,7 @@ export default function CalendarPage() {
                     style={{ background: 'var(--theme-surface)', border: '1px solid var(--theme-border)' }}
                   >
                     <div
-                      className="w-10 h-10 rounded-lg flex flex-col items-center justify-center flex-shrink-0"
+                      className="w-10 h-10 rounded-lg flex flex-col items-center justify-center shrink-0"
                       style={{ background: 'var(--theme-accent)', color: 'var(--theme-accent-text)' }}
                     >
                       <span className="text-[9px] uppercase leading-none">

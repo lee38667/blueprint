@@ -3,7 +3,7 @@ import Button from './Button'
 
 export default function DailyFocusCard(){
   return (
-    <Card className="!bg-off-black border-electric/40 relative overflow-hidden group">
+    <Card className="bg-off-black! border-electric/40 relative overflow-hidden group">
       {/* Background Glow */}
       <div className="absolute top-0 right-0 w-64 h-64 bg-electric/5 blur-[100px] rounded-full -mr-20 -mt-20 pointer-events-none" />
       
@@ -26,10 +26,10 @@ export default function DailyFocusCard(){
         </div>
         
         <div className="grid grid-cols-2 gap-3 mt-auto">
-          <Button variant="primary" className="w-full justify-center !bg-electric hover:!bg-electric/90 !text-black font-bold shadow-[0_0_20px_rgba(0,229,255,0.3)]">
+          <Button variant="primary" className="w-full justify-center bg-electric! hover:bg-electric/90! text-black! font-bold shadow-[0_0_20px_rgba(0,229,255,0.3)]">
             Complete
           </Button>
-          <Button variant="outline" className="w-full justify-center !border-white/20 hover:!border-white/40 text-gray-300">
+          <Button variant="outline" className="w-full justify-center border-white/20! hover:border-white/40! text-gray-300">
             Defer
           </Button>
         </div>

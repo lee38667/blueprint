@@ -40,7 +40,7 @@ export default function Toggle({
         aria-label={label}
         disabled={disabled}
         onClick={() => !disabled && onChange(!checked)}
-        className="relative inline-flex items-center flex-shrink-0 h-6 w-11 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="relative inline-flex items-center shrink-0 h-6 w-11 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:opacity-50 disabled:cursor-not-allowed"
         style={{
           background: checked ? 'var(--theme-accent)' : 'var(--theme-surface)',
           border: '1px solid var(--theme-border)',

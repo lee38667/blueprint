@@ -17,7 +17,7 @@ export default function Card({ title, subtitle, icon, actions, children, classNa
         <div className={`flex items-start justify-between gap-3 ${noPadding ? 'px-5 pt-5 md:px-6 md:pt-6' : ''} ${children ? 'mb-4' : ''}`}>
           <div className="flex items-center gap-3 min-w-0">
             {icon && (
-              <div className="flex-shrink-0" style={{ color: 'var(--theme-accent)' }}>
+              <div className="shrink-0" style={{ color: 'var(--theme-accent)' }}>
                 {icon}
               </div>
             )}
@@ -35,7 +35,7 @@ export default function Card({ title, subtitle, icon, actions, children, classNa
             </div>
           </div>
           {actions && (
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-2 shrink-0">
               {actions}
             </div>
           )}

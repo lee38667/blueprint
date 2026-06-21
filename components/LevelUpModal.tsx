@@ -15,13 +15,13 @@ export default function LevelUpModal({ open, level, narrative, choices, unlocked
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center px-4">
+    <div className="fixed inset-0 z-90 flex items-center justify-center px-4">
       <div className="modal-backdrop" onClick={onClose} />
       <motion.div
         initial={{ opacity: 0, y: 24, scale: 0.96 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 12, scale: 0.98 }}
-        className="modal-panel relative z-[91] w-full max-w-2xl overflow-hidden border"
+        className="modal-panel relative z-91 w-full max-w-2xl overflow-hidden border"
       >
         <div className="absolute inset-0 opacity-90" style={{ background: 'radial-gradient(circle at top, rgba(56, 189, 248, 0.18), transparent 60%), linear-gradient(180deg, rgba(2, 6, 23, 0.92), rgba(2, 6, 23, 0.98))' }} />
         <div className="relative space-y-6 p-6 md:p-8">

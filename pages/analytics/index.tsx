@@ -106,7 +106,7 @@ export default function AnalyticsPage() {
           <>
             {/* Headline summary */}
             <div className="panel-glass rounded-2xl p-5 md:p-6 flex items-start gap-4 accent-gradient">
-              <div className="flex-shrink-0 p-2.5 rounded-xl" style={{ background: 'var(--theme-surface)', color: 'var(--theme-accent)' }}>
+              <div className="shrink-0 p-2.5 rounded-xl" style={{ background: 'var(--theme-surface)', color: 'var(--theme-accent)' }}>
                 <Icons.TrendingUp />
               </div>
               <div>
@@ -196,7 +196,7 @@ export default function AnalyticsPage() {
                                 {row.completed}/{row.expected} {row.frequency === 'weekly' ? 'weeks' : 'days'} · {row.currentStreak}-day streak
                               </p>
                             </div>
-                            <span className={`badge ${meta.badge} flex-shrink-0`}>{row.adherence}% · {meta.label}</span>
+                            <span className={`badge ${meta.badge} shrink-0`}>{row.adherence}% · {meta.label}</span>
                           </div>
                           <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--theme-card-bg)' }}>
                             <div className="h-full rounded-full transition-all" style={{ width: `${row.adherence}%`, background: meta.bar }} />
@@ -232,13 +232,13 @@ export default function AnalyticsPage() {
                         className="flex items-start gap-3 rounded-xl p-3"
                         style={{ background: 'var(--theme-surface)', border: '1px solid var(--theme-border)' }}
                       >
-                        <div className="flex-shrink-0 mt-0.5" style={{ color: meta.color }}>
+                        <div className="shrink-0 mt-0.5" style={{ color: meta.color }}>
                           <Icons.AlertTriangle size="sm" />
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-2">
                             <p className="text-sm font-medium truncate" style={{ color: 'var(--theme-text)' }}>{concern.title}</p>
-                            <span className={`badge ${meta.badge} flex-shrink-0 capitalize`}>{concern.severity}</span>
+                            <span className={`badge ${meta.badge} shrink-0 capitalize`}>{concern.severity}</span>
                           </div>
                           <p className="text-xs mt-0.5" style={{ color: 'var(--theme-text-muted)' }}>{concern.detail}</p>
                         </div>

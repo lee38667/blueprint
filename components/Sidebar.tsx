@@ -17,15 +17,15 @@ const NavItem = ({ href, label, Icon, collapsed, onClick }: { href: string; labe
       aria-current={isActive ? 'page' : undefined}
       className={`hover-lift flex items-center gap-3 p-2.5 rounded-xl transition-all duration-200 group ${
         isActive
-          ? 'ring-1 bg-[var(--theme-surface-hover)]'
-          : 'hover:bg-[var(--theme-surface)]'
+          ? 'ring-1 bg-(--theme-surface-hover)'
+          : 'hover:bg-(--theme-surface)'
       }`}
       style={{
         boxShadow: isActive ? 'inset 0 0 0 1px var(--theme-accent)' : undefined,
       }}
     >
       <div
-        className="transition-colors flex-shrink-0"
+        className="transition-colors shrink-0"
         style={{ color: isActive ? 'var(--theme-accent)' : 'var(--theme-text-muted)' }}
       >
         <Icon />
@@ -160,7 +160,7 @@ export default function Sidebar() {
       aria-label="Main navigation"
     >
       <div className={`mb-6 flex items-center ${collapsed && !isMobile ? 'justify-center' : 'px-2'}`}>
-        <div className="relative w-9 h-9 rounded-xl overflow-hidden border flex-shrink-0" style={{ borderColor: 'var(--theme-border)', background: 'var(--theme-surface)' }}>
+        <div className="relative w-9 h-9 rounded-xl overflow-hidden border shrink-0" style={{ borderColor: 'var(--theme-border)', background: 'var(--theme-surface)' }}>
           <Image src="/logo.png" alt="Blueprint logo" fill className="object-contain" priority />
         </div>
         <AnimatePresence initial={false}>
@@ -219,7 +219,7 @@ export default function Sidebar() {
   return (
     <>
       {/* Desktop sidebar */}
-      <div className="hidden md:block flex-shrink-0">
+      <div className="hidden md:block shrink-0">
         {sidebarContent(false)}
       </div>
 

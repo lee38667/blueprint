@@ -25,7 +25,7 @@ export default function RewardBurst({ trigger }: Props) {
   if (!visible) return null
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-[80] overflow-hidden" aria-hidden="true">
+    <div className="pointer-events-none fixed inset-0 z-80 overflow-hidden" aria-hidden="true">
       {particles.map((particle) => (
         <span
           key={particle.id}

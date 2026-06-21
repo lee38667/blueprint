@@ -4,7 +4,7 @@ type PageWidth = 'default' | 'narrow' | 'wide'
 
 interface PageContainerProps {
   children: ReactNode
-  /** default = max-w-7xl (most pages), narrow = max-w-3xl (forms), wide = max-w-screen-2xl */
+  /** default = max-w-7xl (most pages), narrow = max-w-3xl (forms), wide = max-w-(--breakpoint-2xl) */
   width?: PageWidth
   className?: string
 }
@@ -12,7 +12,7 @@ interface PageContainerProps {
 const widthClass: Record<PageWidth, string> = {
   narrow: 'max-w-3xl',
   default: 'max-w-7xl',
-  wide: 'max-w-screen-2xl',
+  wide: 'max-w-(--breakpoint-2xl)',
 }
 
 /**
