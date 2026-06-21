@@ -3,6 +3,8 @@ import Link from 'next/link'
 import Layout from '../../components/Layout'
 import Card from '../../components/Card'
 import Button from '../../components/Button'
+import MetricCard from '../../components/MetricCard'
+import { PriorityBadge, TaskStatusBadge } from '../../components/StatusBadge'
 import ConfirmDialog from '../../components/ConfirmDialog'
 import AICopilotInsightsCard from '../../components/AICopilotInsightsCard'
 import ChartComponent from '../../components/Chart'
@@ -39,16 +41,6 @@ function readMicroState(): MicroState {
   } catch {
     return {}
   }
-}
-
-function priorityStyle(priority: 'low' | 'normal' | 'high') {
-  if (priority === 'high') {
-    return { background: 'rgba(239, 68, 68, 0.16)', color: '#fecaca', border: '1px solid rgba(239, 68, 68, 0.35)' }
-  }
-  if (priority === 'low') {
-    return { background: 'rgba(20, 184, 166, 0.16)', color: '#99f6e4', border: '1px solid rgba(20, 184, 166, 0.35)' }
-  }
-  return { background: 'rgba(56, 189, 248, 0.16)', color: '#bae6fd', border: '1px solid rgba(56, 189, 248, 0.35)' }
 }
 
 export default function TasksPage() {
@@ -295,18 +287,11 @@ export default function TasksPage() {
           </div>
         </Card>
 
-        <Card title="Weekly Summary">
-          <div className="flex flex-wrap gap-4 text-sm">
-            {[
-              { label: 'Created', value: weeklySummary.created },
-              { label: 'In Progress', value: weeklySummary.inProgress },
-              { label: 'Completed', value: weeklySummary.completed },
-            ].map((item) => (
-              <div key={item.label} className="panel-glass px-4 py-3 rounded-xl" style={{ border: '1px solid var(--theme-border)' }}>
-                <div style={{ color: 'var(--theme-text-muted)' }}>{item.label}</div>
-                <div className="font-mono text-lg" style={{ color: 'var(--theme-text)' }}>{item.value}</div>
-              </div>
-            ))}
+        <Card title="Weekly Summary" subtitle="Last 7 days">
+          <div className="grid grid-cols-3 gap-3 md:gap-4">
+            <MetricCard label="Created" value={weeklySummary.created} tone="accent" />
+            <MetricCard label="In Progress" value={weeklySummary.inProgress} />
+            <MetricCard label="Completed" value={weeklySummary.completed} tone="success" />
           </div>
         </Card>
 
@@ -316,10 +301,10 @@ export default function TasksPage() {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="space-y-4">
-                <div>
-                  <p className="text-xs uppercase mb-1" style={{ color: 'var(--theme-text-muted)' }}>Completion Rate</p>
-                  <div className="text-4xl font-display" style={{ color: 'var(--theme-text)' }}>{analytics.completionRate}%</div>
-                  <p className="text-xs" style={{ color: 'var(--theme-text-muted)' }}>{analytics.activeCount} active | {analytics.overdueCount} overdue</p>
+                <div className="grid grid-cols-3 gap-3">
+                  <MetricCard label="Complete" value={`${analytics.completionRate}%`} tone={analytics.completionRate >= 60 ? 'success' : analytics.completionRate >= 30 ? 'warning' : 'danger'} />
+                  <MetricCard label="Active" value={analytics.activeCount} />
+                  <MetricCard label="Overdue" value={analytics.overdueCount} tone={analytics.overdueCount === 0 ? 'success' : 'danger'} />
                 </div>
                 <div>
                   <p className="text-xs uppercase mb-1" style={{ color: 'var(--theme-text-muted)' }}>Priority mix</p>
@@ -386,8 +371,8 @@ export default function TasksPage() {
                   <div className="space-y-4">
                     <div className="text-sm" style={{ color: 'var(--theme-text-muted)' }}>{task.description ?? ''}</div>
                     <div className="flex flex-wrap items-center gap-2 text-xs">
-                      <span className="badge" style={priorityStyle(task.priority)}>{task.priority}</span>
-                      <span className="badge">{task.status}</span>
+                      <PriorityBadge priority={task.priority} size="sm" />
+                      <TaskStatusBadge status={task.status} size="sm" />
                       {task.project && <span className="badge">{task.project}</span>}
                       {task.due_date && <span className="badge">due {task.due_date}</span>}
                       {nextGoal && <span className="badge badge-accent">{nextGoal.title}</span>}

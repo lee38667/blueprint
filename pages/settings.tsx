@@ -67,9 +67,7 @@ export default function SettingsPage() {
   return (
     <Layout>
       <div className="max-w-3xl mx-auto space-y-6 py-4">
-        <h1 className="text-2xl font-display font-bold" style={{ color: 'var(--theme-text)' }}>
-          Settings
-        </h1>
+        <h1 className="heading-xl">Settings</h1>
 
         <Card title="Profile" subtitle="Identity, planning defaults, and coaching context.">
           <form onSubmit={handleSaveProfile} className="space-y-5">

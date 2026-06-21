@@ -1,6 +1,7 @@
 ﻿import React, { useMemo, useState, useEffect, useRef } from 'react'
 import Layout from '../components/Layout'
 import Card from '../components/Card'
+import MetricCard from '../components/MetricCard'
 import DailyFocusCard from '../components/DailyFocusCard'
 import AICopilotCard from '../components/AICopilotCard'
 import ChartComponent from '../components/Chart'
@@ -94,6 +95,17 @@ export default function DashboardPage() {
   const rewardMessage = useMemo(() => getRewardMessage(motivationItems), [motivationItems])
   const bodyWorkoutProgress = useMemo(() => summarizeBodyProgress(bodyWorkouts), [bodyWorkouts])
 
+  const glance = useMemo(() => {
+    const todayKey = new Date().toLocaleDateString('en-CA')
+    const open = tasks.filter((t) => t.status !== 'done').length
+    const overdue = tasks.filter((t) => t.status !== 'done' && t.due_date && t.due_date.slice(0, 10) < todayKey).length
+    const doneToday = tasks.filter((t) => t.status === 'done' && (t.updated_at ?? '').slice(0, 10) === todayKey).length
+    const dailyHabits = habits.filter((h) => h.frequency === 'daily')
+    const completedHabitIds = new Set(habitLogs.filter((l) => l.completed && l.logged_at.slice(0, 10) === todayKey).map((l) => l.habit_id))
+    const habitsDone = dailyHabits.filter((h) => completedHabitIds.has(h.id)).length
+    return { open, overdue, doneToday, habitsDone, dailyHabitTotal: dailyHabits.length }
+  }, [tasks, habits, habitLogs])
+
   const handleBodySubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!weight && !sleep && !water && !stress) return
@@ -120,6 +132,22 @@ export default function DashboardPage() {
           <div className="text-sm font-mono" style={{ color: 'var(--theme-text-muted)' }}>
             {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </div>
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+          <MetricCard label="Done today" value={glance.doneToday} tone="success" icon={<Icons.Check size="sm" />} />
+          <MetricCard label="Open tasks" value={glance.open} />
+          <MetricCard
+            label="Overdue"
+            value={glance.overdue}
+            tone={glance.overdue === 0 ? 'success' : 'danger'}
+            icon={glance.overdue > 0 ? <Icons.AlertTriangle size="sm" /> : undefined}
+          />
+          <MetricCard
+            label="Habits today"
+            value={glance.dailyHabitTotal ? `${glance.habitsDone}/${glance.dailyHabitTotal}` : '—'}
+            tone={glance.dailyHabitTotal > 0 && glance.habitsDone === glance.dailyHabitTotal ? 'success' : 'default'}
+          />
         </div>
 
         <Card title="Focus Zones">

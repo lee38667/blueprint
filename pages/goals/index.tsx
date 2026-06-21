@@ -46,7 +46,7 @@ export default function GoalsPage() {
     <Layout>
       <div className="max-w-7xl mx-auto space-y-6 py-4">
         <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <h1 className="text-2xl font-display font-bold">Long-term Goals</h1>
+          <h1 className="heading-xl">Long-term Goals</h1>
           <Button variant="outline" disabled={goals.length === 0} onClick={() => exportGoalsToCSV(goals)}>
             Export CSV
           </Button>

@@ -143,7 +143,7 @@ export default function NotesPage() {
         <ConfirmDialog {...confirmDialog} />
         <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-3xl font-display font-bold">Notes & Journal</h1>
+            <h1 className="heading-xl">Notes &amp; Journal</h1>
             <p className="text-sm" style={{ color: 'var(--theme-text-muted)' }}>
               Tag entries, encrypt sensitive ones, and let AI surface mood cues automatically.
             </p>

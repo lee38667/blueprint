@@ -82,24 +82,29 @@ a cross-link from the Tasks page so the deeper report is one tap away.
 
 ---
 
-## Prioritized backlog (not yet done)
+## Prioritized backlog
 
-| Priority | Item | Why |
-|---------|------|-----|
-| P1 | Migrate Tasks/Dashboard stat blocks to `MetricCard` | Visual consistency, less duplicated markup |
-| P1 | Add glyphs to color-coded badges | Accessibility (color-blind users) |
-| P2 | Standardize page titles on `.heading-xl` | Consistency |
-| P2 | Single page-shell wrapper in `Layout` | Consistent spacing/rhythm |
-| P2 | Route all interactive controls through `Button`/`.focus-ring` | Keyboard accessibility |
-| P3 | Standardize empty states on `EmptyState` | Polish |
-| P3 | Tighten Tasks page density / Focus mode | Scan-ability |
+| Priority | Item | Status |
+|---------|------|--------|
+| P1 | Migrate Tasks/Dashboard stat blocks to `MetricCard` | ✅ Done — Tasks (Weekly Summary, Productivity Pulse) + Dashboard "Today at a glance" |
+| P1 | Add glyphs to color-coded badges | ✅ Done — `PriorityBadge`/`TaskStatusBadge` pair color with icon + label |
+| P2 | Standardize page titles on `.heading-xl` | ✅ Done — settings, goals, finance, notes migrated (auth/demo screens intentionally separate) |
+| P2 | Single page-shell wrapper in `Layout` | ⚠️ Recommended |
+| P2 | Route all interactive controls through `Button`/`.focus-ring` | ⚠️ Recommended |
+| P3 | Standardize empty states on `EmptyState` | ⚠️ Recommended |
+| P3 | Tighten Tasks page density / Focus mode | ⚠️ Recommended |
 
 ---
 
-## Changes shipped in this pass
+## Changes shipped
 
+**Features & auth**
 - ✅ Removed 2FA; auth is now plain email/password (`login.tsx`, `settings.tsx`, deleted `useMfa`).
 - ✅ New `/analytics` weekly/monthly report page + engine + unit tests.
-- ✅ Reusable `MetricCard` primitive.
+
+**Design-system / consistency**
+- ✅ Reusable `MetricCard` primitive; adopted on Tasks + Dashboard.
+- ✅ Reusable `PriorityBadge` / `TaskStatusBadge` (glyph + label, not color-only).
 - ✅ Fixed the broken theme-picker glyph.
+- ✅ Page titles standardized on `.heading-xl` across main app pages.
 - ✅ Sidebar + search + Tasks cross-link to Analytics.

@@ -64,7 +64,7 @@ export default function FinancePage(){
     <Layout>
       <div className="max-w-7xl mx-auto space-y-6 py-4">
           <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <h1 className="text-2xl mb-4">Finance</h1>
+            <h1 className="heading-xl mb-4">Finance</h1>
             <Button variant="outline" disabled={logs.length === 0} onClick={() => exportFinanceToCSV(logs)}>
               Export CSV
             </Button>
