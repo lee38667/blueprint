@@ -236,6 +236,8 @@ Run these files in Supabase SQL Editor in this order:
 
 These create the core tables, enable RLS, add soft-delete columns, add audit fields, and create performance indexes.
 
+> ⚠️ Both files are required. `security-and-performance.sql` is what enables Row Level Security and the per-user policies — skipping it leaves tables unprotected. After running both, run `supabase/verify-rls.sql` and confirm **both result sets are empty** (any row is an unprotected table).
+
 ### 4. Optional setup steps
 
 Run these if you want the related features:

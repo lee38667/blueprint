@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { google } from 'googleapis'
 import { getServiceClient } from '../../../lib/apiAuth'
+import { signState } from '../../../lib/oauthState'
 
 const supabase = getServiceClient()
 
@@ -52,7 +53,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       access_type: 'offline',
       scope: ['https://www.googleapis.com/auth/calendar'],
       prompt: 'consent',
-      state: userId // Pass user ID in state parameter
+      state: signState(userId) // Signed user id (HMAC + TTL), verified in callback
     })
 
     res.redirect(authUrl)

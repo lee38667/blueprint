@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { google } from 'googleapis'
 import { getServiceClient } from '../../../lib/apiAuth'
 import { encryptToken } from '../../../lib/serverCrypto'
+import { verifyState } from '../../../lib/oauthState'
 
 const supabase = getServiceClient()
 
@@ -29,36 +30,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.redirect('/settings?calendar_error=no_token')
     }
 
-    // Get user from state parameter (passed during auth initiation)
-    let userId: string | null = null
-    
-    if (state && typeof state === 'string') {
-      try {
-        // State should contain the user_id
-        userId = state
-      } catch (e) {
-        console.error('Failed to parse state:', e)
-      }
-    }
-
-    // If no state, try to get from cookies as fallback
+    // Verify the signed state issued by /api/calendar/auth (HMAC + 10-min TTL).
+    const userId = typeof state === 'string' ? verifyState(state) : null
     if (!userId) {
-      const cookies = req.headers.cookie || ''
-      const cookiePrefix = process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0] || 'sb'
-      const sessionMatch = cookies.match(new RegExp(`${cookiePrefix}-[^=]+-auth-token=([^;]+)`))
-      
-      if (sessionMatch) {
-        try {
-          const sessionData = JSON.parse(decodeURIComponent(sessionMatch[1]))
-          userId = sessionData?.user?.id
-        } catch (e) {
-          console.error('Failed to parse session cookie:', e)
-        }
-      }
-    }
-    
-    if (!userId) {
-      return res.redirect('/settings?calendar_error=not_authenticated')
+      return res.redirect('/settings?calendar_error=invalid_state')
     }
 
     // Store encrypted tokens in database
