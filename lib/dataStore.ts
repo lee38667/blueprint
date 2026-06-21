@@ -24,6 +24,13 @@ import type {
 // To onboard a new table/module, add its slice here so every hook/component
 // can share the same fetch results and avoid duplicate queries.
 
+// Daily-logged tables grow unbounded over time. Cap reads to a generous
+// rolling window so dashboards/charts stay fast as history accumulates.
+// (Adjust if you ever need to chart beyond this horizon.)
+const TIME_SERIES_WINDOW_DAYS = 730
+const windowCutoff = () =>
+  new Date(Date.now() - TIME_SERIES_WINDOW_DAYS * 86_400_000).toISOString()
+
 interface DataStore {
   tasks: Task[]
   tasksLoading: boolean
@@ -136,8 +143,8 @@ export const useDataStore = create<DataStore>()((set, get) => ({
     try {
       const [summaryRes, historyRes, logsRes, targetsRes] = await Promise.all([
         supabaseWithRetry(() => supabase.from('finance_summary').select('*').maybeSingle()),
-        supabaseWithRetry(() => supabase.from('finance_history').select('recorded_at,balance,delta,note').order('recorded_at')),
-        supabaseWithRetry(() => supabase.from('finance_logs').select('id,recorded_at,type,amount,category,note').order('recorded_at', { ascending: false })),
+        supabaseWithRetry(() => supabase.from('finance_history').select('recorded_at,balance,delta,note').gte('recorded_at', windowCutoff()).order('recorded_at')),
+        supabaseWithRetry(() => supabase.from('finance_logs').select('id,recorded_at,type,amount,category,note').gte('recorded_at', windowCutoff()).order('recorded_at', { ascending: false })),
         supabaseWithRetry(() => supabase.from('savings_targets').select('id,month,target_amount').order('month'))
       ])
       set({
@@ -166,6 +173,7 @@ export const useDataStore = create<DataStore>()((set, get) => ({
         supabase
           .from('mood_logs')
           .select('id,mood_label,mood_score,stress_score,note,created_at')
+          .gte('created_at', windowCutoff())
           .order('created_at', { ascending: true })
       )
       set({ moodLogs: (data ?? []) as MoodLog[], moodLoading: false, moodLoaded: true })
@@ -187,6 +195,7 @@ export const useDataStore = create<DataStore>()((set, get) => ({
         supabase
           .from('body_stats')
           .select('id,recorded_at,weight,sleep_hours,water_ml,stress')
+          .gte('recorded_at', windowCutoff())
           .order('recorded_at')
       )
       set({ bodyStats: (data ?? []) as BodyStat[], bodyLoading: false, bodyLoaded: true })
@@ -205,7 +214,7 @@ export const useDataStore = create<DataStore>()((set, get) => ({
     const toast = useToastStore.getState()
     try {
       const { data } = await supabaseWithRetry(() =>
-        supabase.from('notes').select('*').order('updated_at', { ascending: false })
+        supabase.from('notes').select('*').order('updated_at', { ascending: false }).limit(1000)
       )
       set({ notes: (data ?? []) as NoteEntry[], notesLoading: false, notesLoaded: true })
     } catch (error) {
@@ -249,7 +258,7 @@ export const useDataStore = create<DataStore>()((set, get) => ({
           supabase.from('habits').select('id,name,frequency,created_at').order('created_at', { ascending: false })
         ),
         supabaseWithRetry(() =>
-          supabase.from('habit_logs').select('id,habit_id,logged_at,completed').order('logged_at', { ascending: false })
+          supabase.from('habit_logs').select('id,habit_id,logged_at,completed').gte('logged_at', windowCutoff()).order('logged_at', { ascending: false })
         )
       ])
       set({

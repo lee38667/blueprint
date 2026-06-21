@@ -1,7 +1,6 @@
 import { ReactNode } from 'react'
 import Sidebar from './Sidebar'
 import Navbar from './Navbar'
-import AuthGuard from './AuthGuard'
 import Breadcrumbs from './Breadcrumbs'
 
 interface LayoutProps {
@@ -9,9 +8,12 @@ interface LayoutProps {
   className?: string
 }
 
+// Authentication is enforced globally in pages/_app.tsx; Layout no longer
+// re-gates (previously double-gated via AuthGuard, causing a redundant
+// session check and a second loading flash).
 export default function Layout({ children, className = '' }: LayoutProps) {
   return (
-    <AuthGuard>
+    <>
       {/* Skip to main content — accessibility */}
       <a href="#main-content" className="skip-to-content">
         Skip to main content
@@ -31,6 +33,6 @@ export default function Layout({ children, className = '' }: LayoutProps) {
           </main>
         </div>
       </div>
-    </AuthGuard>
+    </>
   )
 }

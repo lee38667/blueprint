@@ -128,7 +128,7 @@ layer(base);
     --theme-border: rgba(255, 255, 255, 0.1);
     --theme-text: #ededed;
     --theme-text-dim: #a3a3a3;
-    --theme-text-muted: #737373;
+    --theme-text-muted: #8f8f8f; /* WCAG AA (>=4.5:1 on near-black); was #737373 (~4.0:1) */
     --theme-accent: #00e5ff;
     --theme-accent-hover: #00c8e0;
     --theme-accent-text: #000000;

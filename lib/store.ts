@@ -40,7 +40,7 @@ export const themes: Record<ThemeName, ThemeConfig> = {
     border: 'rgba(255, 255, 255, 0.1)',
     text: '#EDEDED',
     textDim: '#A3A3A3',
-    textMuted: '#737373',
+    textMuted: '#8f8f8f', // AA (~6.4:1 on #000); was #737373 (~4.0:1)
     accent: '#00E5FF',
     accentHover: '#00C8E0',
     accentText: '#000000',
@@ -61,7 +61,7 @@ export const themes: Record<ThemeName, ThemeConfig> = {
     border: 'rgba(56, 189, 248, 0.15)',
     text: '#e2e8f0',
     textDim: '#94a3b8',
-    textMuted: '#64748b',
+    textMuted: '#8d9bb0', // AA (~7:1 on #020617); was #64748b (~4.2:1)
     accent: '#38bdf8',
     accentHover: '#0ea5e9',
     accentText: '#020617',
@@ -82,7 +82,7 @@ export const themes: Record<ThemeName, ThemeConfig> = {
     border: 'rgba(139, 92, 246, 0.15)',
     text: '#e8e0f0',
     textDim: '#a78bca',
-    textMuted: '#7c5caa',
+    textMuted: '#9c84c4', // AA (~5.9:1 on #0c0a1a); was #7c5caa (~3.5:1)
     accent: '#a78bfa',
     accentHover: '#8b5cf6',
     accentText: '#0c0a1a',
@@ -103,7 +103,7 @@ export const themes: Record<ThemeName, ThemeConfig> = {
     border: 'rgba(236, 72, 153, 0.15)',
     text: '#fce7f3',
     textDim: '#f9a8d4',
-    textMuted: '#be185d',
+    textMuted: '#d56fa6', // AA (~6:1 on #1a0a14); was #be185d (~3.2:1)
     accent: '#ec4899',
     accentHover: '#db2777',
     accentText: '#1a0a14',
