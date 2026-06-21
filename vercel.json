@@ -4,5 +4,16 @@
       "path": "/api/health",
       "schedule": "0 */6 * * *"
     }
-  ]
+  ],
+  "functions": {
+    "pages/api/chat.ts": { "maxDuration": 60 },
+    "pages/api/daily-briefing.ts": { "maxDuration": 60 },
+    "pages/api/goals/coach.ts": { "maxDuration": 60 },
+    "pages/api/finance/coach.ts": { "maxDuration": 60 },
+    "pages/api/mental/coach.ts": { "maxDuration": 60 },
+    "pages/api/body-stats/advice.ts": { "maxDuration": 60 },
+    "pages/api/notes/analyze.ts": { "maxDuration": 60 },
+    "pages/api/documents/summarize.ts": { "maxDuration": 60 },
+    "pages/api/ai-copilot.ts": { "maxDuration": 60 }
+  }
 }
