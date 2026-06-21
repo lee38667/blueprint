@@ -207,6 +207,8 @@ layer(base);
     font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Native controls (checkbox, radio, range, progress) match the theme accent */
+    accent-color: var(--theme-accent);
     background-image:
       radial-gradient(
         1200px 600px at 20% -10%,
@@ -409,6 +411,28 @@ layer(base);
 }
 .btn-lg {
   @apply px-6 py-3 text-base rounded-xl gap-3;
+}
+
+/* Tactile press feedback — gives every button a subtle "pushed" response */
+.btn-glow:active,
+.btn-accent:active,
+.btn-secondary:active,
+.btn-outline:active,
+.btn-danger:active,
+.btn-ghost:active {
+  transform: scale(0.97);
+}
+
+/* Consistent disabled treatment across all button variants */
+.btn-glow:disabled,
+.btn-secondary:disabled,
+.btn-outline:disabled,
+.btn-danger:disabled,
+.btn-ghost:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 /* ═══════════════════════════════════════════════════
@@ -639,6 +663,17 @@ summary:focus-visible {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* Neutralize hover/press scale transforms for motion-sensitive users */
+  .btn-glow:hover, .btn-glow:active,
+  .btn-accent:hover, .btn-accent:active,
+  .btn-secondary:hover, .btn-secondary:active,
+  .btn-outline:hover, .btn-outline:active,
+  .btn-danger:hover, .btn-danger:active,
+  .btn-ghost:hover, .btn-ghost:active,
+  .hover-lift:hover {
+    transform: none !important;
   }
 }
 
