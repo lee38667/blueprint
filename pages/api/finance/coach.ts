@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { authGuard } from '../../../lib/apiAuth'
+import { aiJSON, AI_MODELS } from '../../../lib/aiClient'
 
 type SummaryPayload = {
   balance?: number | null
@@ -39,11 +40,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const user = await authGuard(req, res, { name: 'finance-coach', rateLimit: { limit: 30, windowMs: 60_000 } })
   if (!user) return
 
-  const apiKey = process.env.AI_API_KEY || process.env.GITHUB_DEVELOPER_AI_KEY
-  if (!apiKey) {
-    return res.status(500).json({ error: 'AI API key not configured' })
-  }
-
   const { summary, history = [], logs = [] } = req.body as {
     summary?: SummaryPayload | null
     history?: HistoryPayload[]
@@ -62,51 +58,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     .join('\n')
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-5.1-mini',
-        temperature: 0.35,
-        max_tokens: 220,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You are a concise financial planning assistant. Respond as JSON with outlook (string), guardrails (array of 3 short cautions), opportunities (array of 3), cashflowScore (0-100).'
-          },
-          {
-            role: 'user',
-            content: `Balance snapshot: ${summary?.balance ?? 'n/a'} savings:${summary?.savings ?? 'n/a'} debt:${summary?.debt ?? 'n/a'}\nRecent balance history:\n${trendBlock || 'none'}\nIncome/expense logs:\n${logBlock || 'none'}`
-          }
-        ]
-      })
+    const parsed = await aiJSON<{ outlook?: string; guardrails?: string[]; opportunities?: string[]; cashflowScore?: number }>({
+      model: AI_MODELS.smart,
+      temperature: 0.3,
+      maxTokens: 450,
+      system:
+        'You are a concise personal financial planning assistant. Respond as JSON only, shape: { "outlook": string, "guardrails": string[] (3 short cautions), "opportunities": string[] (3 short ideas), "cashflowScore": 0-100 integer }. Ground every statement in the supplied balance, history, and logs — do not invent numbers.',
+      user: `Balance snapshot: ${summary?.balance ?? 'n/a'} savings:${summary?.savings ?? 'n/a'} debt:${summary?.debt ?? 'n/a'}\nRecent balance history:\n${trendBlock || 'none'}\nIncome/expense logs:\n${logBlock || 'none'}`,
+      fallback: { outlook: 'Unable to analyze finances right now.', guardrails: [], opportunities: [], cashflowScore: 50 },
     })
-
-    if (!response.ok) {
-      const text = await response.text()
-      console.error('finance coach error', text)
-      return res.status(500).json({ error: 'Failed to analyze finances' })
-    }
-
-    const json: any = await response.json()
-    const output = json.choices?.[0]?.message?.content?.trim() ?? ''
-    const cleaned = output.replace(/```json|```/g, '').trim()
-    try {
-      const parsed = JSON.parse(cleaned)
-      return res.status(200).json({
-        outlook: parsed.outlook ?? 'Cashflow steady. Continue tracking habits.',
-        guardrails: Array.isArray(parsed.guardrails) ? parsed.guardrails.slice(0, 3) : [],
-        opportunities: Array.isArray(parsed.opportunities) ? parsed.opportunities.slice(0, 3) : [],
-        cashflowScore: Number(parsed.cashflowScore ?? 50)
-      })
-    } catch (error) {
-      console.error('finance coach parse error', cleaned)
-      return res.status(200).json({ outlook: 'Unable to parse AI response', guardrails: [], opportunities: [], cashflowScore: 0 })
-    }
+    return res.status(200).json({
+      outlook: parsed.outlook ?? 'Cashflow steady. Continue tracking habits.',
+      guardrails: Array.isArray(parsed.guardrails) ? parsed.guardrails.slice(0, 3) : [],
+      opportunities: Array.isArray(parsed.opportunities) ? parsed.opportunities.slice(0, 3) : [],
+      cashflowScore: Number(parsed.cashflowScore ?? 50)
+    })
   } catch (error) {
     console.error('finance coach exception', error)
     return res.status(500).json({ error: 'Unexpected error contacting AI service' })

@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { authGuard } from '../../../lib/apiAuth'
+import { aiJSON, AI_MODELS } from '../../../lib/aiClient'
 
 interface GoalPayload {
   id: string
@@ -45,11 +46,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const user = await authGuard(req, res, { name: 'goals-coach', rateLimit: { limit: 30, windowMs: 60_000 } })
   if (!user) return
 
-  const apiKey = process.env.AI_API_KEY || process.env.GITHUB_DEVELOPER_AI_KEY
-  if (!apiKey) {
-    return res.status(500).json({ error: 'AI API key not configured' })
-  }
-
   const { goal, milestones = [], subtasks = [] } = req.body as {
     goal?: GoalPayload
     milestones?: MilestonePayload[]
@@ -65,58 +61,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     .join('\n')
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-5.1-mini',
-        temperature: 0.4,
-        max_tokens: 260,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You analyze personal goals and respond with JSON: momentumScore (0-100), summary (string), risks (array), nextSteps (array). Be concise and actionable.'
-          },
-          {
-            role: 'user',
-            content: `Goal: ${goal.title}\nStatus: ${goal.status}\nCategory: ${goal.category ?? 'n/a'}\nTarget: ${goal.target_date ?? 'n/a'}\nNote: ${goal.progress_note ?? 'n/a'}\nMilestones:\n${msSummary || 'none'}`
-          }
-        ]
-      })
+    const parsed = await aiJSON<{ momentumScore?: number; summary?: string; risks?: string[]; nextSteps?: string[] }>({
+      model: AI_MODELS.smart,
+      temperature: 0.3,
+      maxTokens: 500,
+      system:
+        'You analyze personal goals and respond with JSON only, shape: { "momentumScore": 0-100 integer, "summary": string, "risks": string[], "nextSteps": string[] }. momentumScore reflects realistic progress likelihood given status, target date, and milestone completion. Keep summary to 1-2 sentences; risks and nextSteps to short, concrete, actionable items.',
+      user: `Goal: ${goal.title}\nStatus: ${goal.status}\nCategory: ${goal.category ?? 'n/a'}\nTarget: ${goal.target_date ?? 'n/a'}\nNote: ${goal.progress_note ?? 'n/a'}\nMilestones:\n${msSummary || 'none'}`,
+      fallback: { momentumScore: 0, summary: 'Unable to generate a summary right now.', risks: [], nextSteps: [] },
     })
-
-    if (!response.ok) {
-      const text = await response.text()
-      console.error('goal coach error', text)
-      return res.status(500).json({ error: 'Failed to evaluate goal' })
-    }
-
-    const json: any = await response.json()
-    const output = json.choices?.[0]?.message?.content?.trim() ?? ''
-    const cleaned = output.replace(/```json|```/g, '').trim()
-    try {
-      const parsed = JSON.parse(cleaned)
-      return res.status(200).json({
-        goalId: goal.id,
-        momentumScore: Number(parsed.momentumScore ?? 0),
-        summary: parsed.summary ?? 'No summary available',
-        risks: Array.isArray(parsed.risks) ? parsed.risks : [],
-        nextSteps: Array.isArray(parsed.nextSteps) ? parsed.nextSteps : []
-      })
-    } catch (error) {
-      console.error('goal coach parse error', cleaned)
-      return res.status(200).json({
-        goalId: goal.id,
-        momentumScore: 0,
-        summary: 'Unable to parse AI response',
-        risks: [],
-        nextSteps: []
-      })
-    }
+    return res.status(200).json({
+      goalId: goal.id,
+      momentumScore: Number(parsed.momentumScore ?? 0),
+      summary: parsed.summary ?? 'No summary available',
+      risks: Array.isArray(parsed.risks) ? parsed.risks : [],
+      nextSteps: Array.isArray(parsed.nextSteps) ? parsed.nextSteps : []
+    })
   } catch (error) {
     console.error('goal coach exception', error)
     return res.status(500).json({ error: 'Unexpected error contacting AI service' })

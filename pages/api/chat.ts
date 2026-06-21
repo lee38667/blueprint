@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { AISnapshot, formatSnapshotForAI } from '../../lib/aiSnapshot'
 import { authGuard } from '../../lib/apiAuth'
 import { getUpcomingEvents, formatCalendarSummary } from '../../lib/serverCalendar'
+import { aiText, AI_MODELS } from '../../lib/aiClient'
 
 interface ChatMessage {
   role: 'user' | 'assistant'
@@ -36,11 +37,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
   const user = await authGuard(req, res, { name: 'chat', rateLimit: { limit: 30, windowMs: 60_000 } })
   if (!user) return
-
-  const apiKey = process.env.AI_API_KEY || process.env.GITHUB_DEVELOPER_AI_KEY
-  if (!apiKey) {
-    return res.status(500).json({ error: 'AI API key not configured' })
-  }
 
   const { messages, snapshot, memories } = req.body as {
     messages?: ChatMessage[]
@@ -116,33 +112,16 @@ Do NOT announce that you're saving a memory unless the user explicitly asks you 
 Do NOT save memories for transient things (today's mood, current task status) — only save durable facts about the user.`
 
   try {
-    const response = await fetch('https://models.inference.ai.azure.com/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-        'User-Agent': 'Blueprint/1.0'
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
+    const rawReply =
+      (await aiText({
+        model: AI_MODELS.smart,
+        temperature: 0.6,
+        maxTokens: 900,
         messages: [
           { role: 'system', content: systemPrompt },
-          ...messages.slice(-20)
+          ...messages.slice(-20),
         ],
-        temperature: 0.6,
-        max_tokens: 800
-      })
-    })
-
-    if (!response.ok) {
-      const text = await response.text()
-      console.error('Chat API error:', text)
-      return res.status(500).json({ error: 'Failed to get AI response' })
-    }
-
-    const json: any = await response.json()
-    const rawReply = json.choices?.[0]?.message?.content?.trim() || 'I couldn\'t generate a response. Please try again.'
+      })) || 'I couldn\'t generate a response. Please try again.'
 
     // Extract calendar action if present
     let calendarAction: CalendarAction | undefined

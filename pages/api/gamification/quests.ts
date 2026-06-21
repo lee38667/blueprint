@@ -9,6 +9,7 @@ import {
   type QuestGenerationTask,
 } from '../../../lib/gamification'
 import { ensureGamificationProfile, requireApiUser } from '../../../lib/serverGamification'
+import { aiJSON, AI_MODELS } from '../../../lib/aiClient'
 import type { Quest } from '../../../types/models'
 
 async function generateWithAI(payload: {
@@ -17,45 +18,17 @@ async function generateWithAI(payload: {
   goals: QuestGenerationGoal[]
   weakestBodyPart: string
 }) {
-  const apiKey = process.env.AI_API_KEY || process.env.GITHUB_DEVELOPER_AI_KEY
-  if (!apiKey) return null
-
-  const response = await fetch('https://models.inference.ai.azure.com/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-      'User-Agent': 'Blueprint/1.0',
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      temperature: 0.65,
-      max_tokens: 700,
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a gamification engine for Blueprint themed like Solo Leveling. Generate 3-5 ADHD-friendly daily quests with micro-actions, high reward energy, and JSON array output only.',
-        },
-        {
-          role: 'user',
-          content: `User data:\n${JSON.stringify(payload, null, 2)}\n\nEach quest:\n- name: Epic title (e.g., "Raid the Email Dungeon")\n- description: Fun narrative (1-2 sentences)\n- type: task/habit/workout/body_part\n- exp_reward: 10-100 based on difficulty\n- gold_reward: 5-50\n- linked_id: task/habit id or null\n- body_part: body part if type is body_part, otherwise null\n\nPrioritize ADHD-friendly micro-actions, high reward, and tie one quest to the weakest body part shown above. Output JSON array only.`,
-        },
-      ],
-    }),
-  })
-
-  if (!response.ok) {
-    return null
-  }
-
-  const json: any = await response.json()
-  const content = json.choices?.[0]?.message?.content?.trim() || ''
-  const cleaned = content.replace(/```json|```/g, '').trim()
-
   try {
-    const parsed = JSON.parse(cleaned)
-    return Array.isArray(parsed) ? parsed : null
+    const parsed = await aiJSON<{ quests?: any[] }>({
+      model: AI_MODELS.fast,
+      temperature: 0.6,
+      maxTokens: 900,
+      system:
+        'You are a gamification engine for Blueprint themed like Solo Leveling. Return JSON only, shape: { "quests": [...] } with 3-5 ADHD-friendly daily quests featuring micro-actions and high reward energy.',
+      user: `User data:\n${JSON.stringify(payload, null, 2)}\n\nEach quest object:\n- name: Epic title (e.g., "Raid the Email Dungeon")\n- description: Fun narrative (1-2 sentences)\n- type: task/habit/workout/body_part\n- exp_reward: 10-100 based on difficulty\n- gold_reward: 5-50\n- linked_id: task/habit id or null\n- body_part: body part if type is body_part, otherwise null\n\nPrioritize ADHD-friendly micro-actions, high reward, and tie one quest to the weakest body part shown above. Return { "quests": [...] } only.`,
+      fallback: { quests: [] },
+    })
+    return Array.isArray(parsed.quests) && parsed.quests.length > 0 ? parsed.quests : null
   } catch {
     return null
   }

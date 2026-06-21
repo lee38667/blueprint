@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { authGuard } from '../../../lib/apiAuth'
+import { aiJSON, AI_MODELS } from '../../../lib/aiClient'
 
 type Success = {
   summary: string
@@ -19,61 +20,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const user = await authGuard(req, res, { name: 'documents-summarize', rateLimit: { limit: 20, windowMs: 60_000 } })
   if (!user) return
 
-  const apiKey = process.env.AI_API_KEY || process.env.GITHUB_DEVELOPER_AI_KEY
-  if (!apiKey) {
-    return res.status(500).json({ error: 'AI API key not configured' })
-  }
-
   const { title, snippet = '', context = '' } = req.body as { title?: string; snippet?: string; context?: string }
   if (!title && !snippet && !context) {
     return res.status(400).json({ error: 'Document details missing' })
   }
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-5.1-mini',
-        temperature: 0.35,
-        max_tokens: 180,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'Summarize personal documents succinctly. Respond as JSON with keys summary, talkingPoints, keywords. Talking points should be 2-4 short bullet phrases.'
-          },
-          {
-            role: 'user',
-            content: `Title: ${title ?? 'Untitled'}\nContext: ${context || 'n/a'}\nSnippet: ${snippet.slice(0, 1800)}`
-          }
-        ]
-      })
+    const parsed = await aiJSON<{ summary?: string; talkingPoints?: string[]; keywords?: string[] }>({
+      model: AI_MODELS.smart,
+      temperature: 0.3,
+      maxTokens: 450,
+      system:
+        'Summarize personal documents succinctly. Respond as JSON only, shape: { "summary": string, "talkingPoints": string[] (2-4 short phrases), "keywords": string[] }. Base everything on the supplied title/context/snippet only.',
+      user: `Title: ${title ?? 'Untitled'}\nContext: ${context || 'n/a'}\nSnippet: ${snippet.slice(0, 1800)}`,
+      fallback: { summary: 'Unable to summarize this document right now.', talkingPoints: [], keywords: [] },
     })
-
-    if (!response.ok) {
-      const text = await response.text()
-      console.error('doc summarize error', text)
-      return res.status(500).json({ error: 'Failed to summarize document' })
-    }
-
-    const json: any = await response.json()
-    const output = json.choices?.[0]?.message?.content?.trim() ?? ''
-    const cleaned = output.replace(/```json|```/g, '').trim()
-    try {
-      const parsed = JSON.parse(cleaned)
-      return res.status(200).json({
-        summary: parsed.summary ?? 'No summary available',
-        talkingPoints: parsed.talkingPoints ?? [],
-        keywords: parsed.keywords ?? []
-      })
-    } catch (error) {
-      console.error('doc summarize parse error', cleaned)
-      return res.status(200).json({ summary: 'Unable to parse AI response', talkingPoints: [], keywords: [] })
-    }
+    return res.status(200).json({
+      summary: parsed.summary ?? 'No summary available',
+      talkingPoints: Array.isArray(parsed.talkingPoints) ? parsed.talkingPoints : [],
+      keywords: Array.isArray(parsed.keywords) ? parsed.keywords : []
+    })
   } catch (error) {
     console.error('doc summarize exception', error)
     return res.status(500).json({ error: 'Unexpected error contacting AI service' })

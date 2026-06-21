@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { AISnapshot, BrainInsight, HunterRadarInsight, HunterRadarStat, formatSnapshotForAI } from '../../lib/aiSnapshot'
 import { authGuard, getServiceClient } from '../../lib/apiAuth'
 import { getUpcomingEvents, formatCalendarSummary } from '../../lib/serverCalendar'
+import { aiText, aiJSON, AI_MODELS } from '../../lib/aiClient'
 
 type DataAction = {
   type: 'body_stats' | 'mood' | 'finance' | 'task' | 'note' | 'goal' | 'unknown'
@@ -135,11 +136,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const user = await authGuard(req, res, { name: 'ai-copilot', rateLimit: { limit: 40, windowMs: 60_000 } })
   if (!user) return
 
-  const apiKey = process.env.AI_API_KEY || process.env.GITHUB_DEVELOPER_AI_KEY
-  if (!apiKey) {
-    return res.status(500).json({ error: 'AI API key not configured' })
-  }
-
   const { mood, mode = 'mood', snapshot, message } = req.body as {
     mood?: string
     mode?: Mode
@@ -205,20 +201,11 @@ Given their schedule, goals, mood, and the current time of day, suggest what the
         return res.status(400).json({ error: 'Message is required for record mode' })
       }
 
-      const response = await fetch('https://models.inference.ai.azure.com/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-          'User-Agent': 'Blueprint/1.0',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            {
-              role: 'system',
-              content: `You are a data extraction assistant. Parse the user's natural language message and extract structured data for recording.
+      const action = await aiJSON<DataAction>({
+        model: AI_MODELS.fast,
+        temperature: 0.2,
+        maxTokens: 400,
+        system: `You are a data extraction assistant. Parse the user's natural language message and extract structured data for recording.
 
 Return JSON with this exact structure:
 {
@@ -237,40 +224,14 @@ Type-specific data fields:
 - unknown: {} (if you can't determine the type)
 
 Extract all mentioned values. Use ISO date format (YYYY-MM-DD) for dates. If "today" is mentioned, use today's date.`,
-            },
-            {
-              role: 'user',
-              content: message,
-            },
-          ],
-          temperature: 0.3,
-          max_tokens: 300,
-        }),
+        user: message,
+        fallback: {
+          type: 'unknown',
+          data: {},
+          confirmation: "I couldn't understand that. Please try rephrasing.",
+        },
       })
-
-      if (!response.ok) {
-        const text = await response.text()
-        console.error('AI API error:', text)
-        return res.status(500).json({ error: 'Failed to parse data from AI' })
-      }
-
-      const json: any = await response.json()
-      const content = json.choices?.[0]?.message?.content?.trim() || ''
-      const cleaned = content.replace(/```json|```/g, '').trim()
-
-      try {
-        const action: DataAction = JSON.parse(cleaned)
-        return res.status(200).json({ action })
-      } catch (error) {
-        console.error('Record mode parse error', error, cleaned)
-        return res.status(200).json({
-          action: {
-            type: 'unknown',
-            data: {},
-            confirmation: "I couldn't understand that. Please try rephrasing.",
-          },
-        })
-      }
+      return res.status(200).json({ action })
     }
 
     if (mode === 'brain') {
@@ -280,106 +241,49 @@ Extract all mentioned values. Use ISO date format (YYYY-MM-DD) for dates. If "to
 
       const compiled = formatSnapshotForAI(snapshot)
       const fallbackRadar = buildFallbackHunterRadar(snapshot)
-      const response = await fetch('https://models.inference.ai.azure.com/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-          'User-Agent': 'Blueprint/1.0',
+      const parsed = await aiJSON<any>({
+        model: AI_MODELS.smart,
+        temperature: 0.4,
+        maxTokens: 1100,
+        system:
+          'You are the intelligence layer for a personal operating system with a Solo Leveling-inspired hunter dashboard. Analyze grounded personal data and return structured, conservative guidance. Be aware of current local time and shape interventions around what is realistic right now, not just eventually. Base hunter stat values and action recommendations only on the supplied data.',
+        user:
+          'Use the structured data below to craft JSON with keys summary, taskSuggestions, goalHighlights, wellnessNote, riskAlerts, hunterRadar. ' +
+          'Keep each array under 4 items. hunterRadar must contain summary, stats, and actions. ' +
+          'stats must be an array of 5 objects with keys key, label, value, reason. ' +
+          'The key values must be strength, agility, endurance, recovery, focus. ' +
+          'Each value must be an integer from 0 to 100 and each reason must explain which recorded data influenced it. ' +
+          'actions must be an array of 2 to 4 short concrete stat-rebalancing actions that target the weakest current stats today. ' +
+          'Data:\n' + compiled,
+        fallback: {
+          summary: 'AI returned an invalid response. Showing fallback hunter stats from your recorded data.',
+          taskSuggestions: [],
+          goalHighlights: [],
+          riskAlerts: ['AI response failed to parse.'],
+          hunterRadar: undefined,
         },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are the intelligence layer for a personal operating system with a Solo Leveling-inspired hunter dashboard. Analyze grounded personal data and return structured, conservative guidance. Be aware of current local time and shape interventions around what is realistic right now, not just eventually. Base hunter stat values and action recommendations only on the supplied data.',
-            },
-            {
-              role: 'user',
-              content:
-                'Use the structured data below to craft JSON with keys summary, taskSuggestions, goalHighlights, wellnessNote, riskAlerts, hunterRadar. ' +
-                'Keep each array under 4 items. hunterRadar must contain summary, stats, and actions. ' +
-                'stats must be an array of 5 objects with keys key, label, value, reason. ' +
-                'The key values must be strength, agility, endurance, recovery, focus. ' +
-                'Each value must be an integer from 0 to 100 and each reason must explain which recorded data influenced it. ' +
-                'actions must be an array of 2 to 4 short concrete stat-rebalancing actions that target the weakest current stats today. ' +
-                'Data:\n' + compiled,
-            },
-          ],
-          temperature: 0.45,
-          max_tokens: 800,
-        }),
       })
 
-      if (!response.ok) {
-        const text = await response.text()
-        console.error('AI API error:', text)
-        return res.status(500).json({ error: 'Failed to fetch AI insight' })
+      const brain: BrainInsight = {
+        summary: parsed.summary ?? 'No summary provided.',
+        taskSuggestions: parsed.taskSuggestions ?? [],
+        goalHighlights: parsed.goalHighlights ?? [],
+        wellnessNote: parsed.wellnessNote,
+        riskAlerts: parsed.riskAlerts ?? [],
+        hunterRadar: normalizeHunterRadar(parsed.hunterRadar, fallbackRadar),
       }
-
-      const json: any = await response.json()
-      const content = json.choices?.[0]?.message?.content?.trim() || ''
-      const cleaned = content.replace(/```json|```/g, '').trim()
-
-      try {
-        const parsed = JSON.parse(cleaned)
-        const brain: BrainInsight = {
-          summary: parsed.summary ?? 'No summary provided.',
-          taskSuggestions: parsed.taskSuggestions ?? [],
-          goalHighlights: parsed.goalHighlights ?? [],
-          wellnessNote: parsed.wellnessNote,
-          riskAlerts: parsed.riskAlerts ?? [],
-          hunterRadar: normalizeHunterRadar(parsed.hunterRadar, fallbackRadar),
-        }
-        return res.status(200).json({ brain })
-      } catch (error) {
-        console.error('Brain insight parse error', error, cleaned)
-        return res.status(200).json({
-          brain: {
-            summary: 'AI returned an invalid response. Showing fallback hunter stats from your recorded data.',
-            taskSuggestions: [],
-            goalHighlights: [],
-            riskAlerts: ['AI response failed to parse.'],
-            hunterRadar: fallbackRadar,
-          },
-        })
-      }
+      return res.status(200).json({ brain })
     }
 
-    const response = await fetch('https://models.inference.ai.azure.com/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-        'User-Agent': 'Blueprint/1.0',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are Blueprint Sentinel, the living guidance layer of a personal operating system. You are aware of the current local date and time and should speak like an attentive system companion who can gently nudge the user toward the next best action. Keep answers short, specific, and grounded in what is realistic right now.',
-          },
-          {
-            role: 'user',
-            content: userPrompt,
-          },
-        ],
-        max_tokens: 120,
-        temperature: 0.7,
-      }),
-    })
-
-    if (!response.ok) {
-      const text = await response.text()
-      console.error('AI API error:', text)
-      return res.status(500).json({ error: 'Failed to fetch AI insight' })
-    }
-
-    const json: any = await response.json()
-    const insight = json.choices?.[0]?.message?.content?.trim() || 'No insight generated.'
+    const insight =
+      (await aiText({
+        model: mode === 'focus' ? AI_MODELS.smart : AI_MODELS.fast,
+        temperature: 0.6,
+        maxTokens: mode === 'focus' ? 400 : 220,
+        system:
+          'You are Blueprint Sentinel, the living guidance layer of a personal operating system. You are aware of the current local date and time and should speak like an attentive system companion who can gently nudge the user toward the next best action. Keep answers short, specific, and grounded in what is realistic right now.',
+        user: userPrompt,
+      })) || 'No insight generated.'
 
     return res.status(200).json({ insight })
   } catch (error) {

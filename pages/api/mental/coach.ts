@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { authGuard } from '../../../lib/apiAuth'
+import { aiJSON, AI_MODELS } from '../../../lib/aiClient'
 
 type MoodPayload = {
   created_at: string
@@ -28,11 +29,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const user = await authGuard(req, res, { name: 'mental-coach', rateLimit: { limit: 30, windowMs: 60_000 } })
   if (!user) return
 
-  const apiKey = process.env.AI_API_KEY || process.env.GITHUB_DEVELOPER_AI_KEY
-  if (!apiKey) {
-    return res.status(500).json({ error: 'AI API key not configured' })
-  }
-
   const { logs } = req.body as { logs?: MoodPayload[] }
   if (!logs || !logs.length) {
     return res.status(400).json({ error: 'Mood logs required' })
@@ -44,56 +40,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     .join('\n')
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-5.1-mini',
-        temperature: 0.55,
-        max_tokens: 220,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You are a compassionate mental health companion. Return JSON with encouragement, burnoutRisk (low|medium|high), actions (max 3), regulationTips (max 3). Keep tone practical.'
-          },
-          {
-            role: 'user',
-            content: `Recent entries (oldest to newest):\n${payload}`
-          }
-        ]
-      })
+    const parsed = await aiJSON<{ encouragement?: string; burnoutRisk?: 'low' | 'medium' | 'high'; actions?: string[]; regulationTips?: string[] }>({
+      model: AI_MODELS.smart,
+      temperature: 0.5,
+      maxTokens: 450,
+      system:
+        'You are a compassionate, practical mental-health companion. Respond as JSON only, shape: { "encouragement": string, "burnoutRisk": "low"|"medium"|"high", "actions": string[] (max 3), "regulationTips": string[] (max 3) }. Infer burnoutRisk from mood/stress trends in the data. Be warm but concrete; never diagnose.',
+      user: `Recent entries (oldest to newest):\n${payload}`,
+      fallback: { encouragement: 'Keep checking in with your emotions. Consistency builds resilience.', burnoutRisk: 'low', actions: [], regulationTips: [] },
     })
-
-    if (!response.ok) {
-      const text = await response.text()
-      console.error('mental coach error', text)
-      return res.status(500).json({ error: 'Failed to analyze mood logs' })
-    }
-
-    const json: any = await response.json()
-    const output = json.choices?.[0]?.message?.content?.trim() ?? ''
-    const cleaned = output.replace(/```json|```/g, '').trim()
-    try {
-      const parsed = JSON.parse(cleaned)
-      return res.status(200).json({
-        encouragement: parsed.encouragement ?? 'Keep showing up for yourself—small check-ins add up.',
-        burnoutRisk: parsed.burnoutRisk ?? 'low',
-        actions: Array.isArray(parsed.actions) ? parsed.actions.slice(0, 3) : [],
-        regulationTips: Array.isArray(parsed.regulationTips) ? parsed.regulationTips.slice(0, 3) : []
-      })
-    } catch (error) {
-      console.error('mental coach parse error', cleaned)
-      return res.status(200).json({
-        encouragement: 'Keep checking in with your emotions. Consistency builds resilience.',
-        burnoutRisk: 'low',
-        actions: [],
-        regulationTips: []
-      })
-    }
+    return res.status(200).json({
+      encouragement: parsed.encouragement ?? 'Keep showing up for yourself—small check-ins add up.',
+      burnoutRisk: parsed.burnoutRisk ?? 'low',
+      actions: Array.isArray(parsed.actions) ? parsed.actions.slice(0, 3) : [],
+      regulationTips: Array.isArray(parsed.regulationTips) ? parsed.regulationTips.slice(0, 3) : []
+    })
   } catch (error) {
     console.error('mental coach exception', error)
     return res.status(500).json({ error: 'Unexpected error contacting AI service' })

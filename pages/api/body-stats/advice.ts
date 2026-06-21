@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { authGuard } from '../../../lib/apiAuth'
+import { aiJSON, AI_MODELS } from '../../../lib/aiClient'
 
 interface BodyStatPayload {
   recorded_at: string
@@ -26,11 +27,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const user = await authGuard(req, res, { name: 'body-stats-advice', rateLimit: { limit: 30, windowMs: 60_000 } })
   if (!user) return
 
-  const apiKey = process.env.AI_API_KEY || process.env.GITHUB_DEVELOPER_AI_KEY
-  if (!apiKey) {
-    return res.status(500).json({ error: 'AI API key not configured' })
-  }
-
   const { stats } = req.body as { stats?: BodyStatPayload[] }
   if (!stats || !stats.length) {
     return res.status(400).json({ error: 'Stats array required' })
@@ -42,49 +38,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     .join('\n')
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-5.1-mini',
-        temperature: 0.45,
-        max_tokens: 160,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You are a wellness analyst. Provide concise advice from weekly biometric trends. Respond as JSON with keys headline (string) and insights (array of up to 4 bullet strings).'
-          },
-          {
-            role: 'user',
-            content: `Weekly stats (oldest -> newest):\n${formatted}`
-          }
-        ]
-      })
+    const parsed = await aiJSON<{ headline?: string; insights?: string[] }>({
+      model: AI_MODELS.smart,
+      temperature: 0.4,
+      maxTokens: 400,
+      system:
+        'You are a wellness analyst. Respond as JSON only, shape: { "headline": string, "insights": string[] (up to 4 short bullets) }. Base advice strictly on the weekly weight/sleep/water/stress trends provided; call out notable changes and one realistic next step.',
+      user: `Weekly stats (oldest -> newest):\n${formatted}`,
+      fallback: { headline: 'Unable to analyze stats right now.', insights: [] },
     })
-
-    if (!response.ok) {
-      const text = await response.text()
-      console.error('body stats advice error', text)
-      return res.status(500).json({ error: 'Failed to analyze stats' })
-    }
-
-    const json: any = await response.json()
-    const output = json.choices?.[0]?.message?.content?.trim() ?? ''
-    const cleaned = output.replace(/```json|```/g, '').trim()
-    try {
-      const parsed = JSON.parse(cleaned)
-      return res.status(200).json({
-        headline: parsed.headline ?? 'Wellness snapshot',
-        insights: parsed.insights ?? []
-      })
-    } catch (error) {
-      console.error('body stats parse error', cleaned)
-      return res.status(200).json({ headline: 'Unable to parse AI response', insights: [] })
-    }
+    return res.status(200).json({
+      headline: parsed.headline ?? 'Wellness snapshot',
+      insights: Array.isArray(parsed.insights) ? parsed.insights.slice(0, 4) : []
+    })
   } catch (error) {
     console.error('body stats advice exception', error)
     return res.status(500).json({ error: 'Unexpected error contacting AI service' })
