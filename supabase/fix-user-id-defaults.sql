@@ -14,25 +14,21 @@
 -- verify-rls.sql.
 -- ─────────────────────────────────────────────────────────────
 
+-- Dynamic: covers EVERY public table that has a user_id column (so new tables
+-- like `habits` are caught automatically). Idempotent — skips columns already
+-- defaulting to auth.uid().
 do $$
 declare
-  t text;
-  tables text[] := array[
-    'life_areas', 'notes', 'workouts', 'workout_logs',
-    'finance_summary', 'finance_history', 'finance_logs', 'savings_targets',
-    'body_stats', 'notifications', 'scripture_favorites', 'skills',
-    'user_profiles', 'content', 'ai_insights', 'motivations',
-    'goals', 'mood_logs', 'tasks', 'user_gamification_profile', 'quests'
-  ];
+  r record;
 begin
-  foreach t in array tables loop
-    -- only touch tables that actually have a user_id column
-    if exists (
-      select 1 from information_schema.columns
-      where table_schema = 'public' and table_name = t and column_name = 'user_id'
-    ) then
-      execute format('alter table public.%I alter column user_id set default auth.uid()', t);
-    end if;
+  for r in
+    select table_name
+    from information_schema.columns
+    where table_schema = 'public'
+      and column_name = 'user_id'
+      and (column_default is distinct from 'auth.uid()')
+  loop
+    execute format('alter table public.%I alter column user_id set default auth.uid()', r.table_name);
   end loop;
 end $$;
 
