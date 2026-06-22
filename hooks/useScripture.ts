@@ -1,38 +1,55 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
-interface Verse {
+export interface DailyVerse {
   reference: string
   text: string
+  theme: string
+  themeKey: string
+  encouragement: string
+  translation: string
+}
+
+const FALLBACK: DailyVerse = {
+  reference: 'Lamentations 3:22-23',
+  text: 'The LORD’s loving kindnesses do not cease; his mercies are new every morning. Great is your faithfulness.',
+  theme: 'Hope',
+  themeKey: 'hope',
+  encouragement: 'The story isn’t over — hold on to what is ahead.',
+  translation: 'World English Bible',
 }
 
 export function useScripture() {
-  const [verse, setVerse] = useState<Verse | null>(null)
+  const [verse, setVerse] = useState<DailyVerse | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [offset, setOffset] = useState(0)
 
-  const fetchRandom = async () => {
+  const load = useCallback(async (nextOffset: number) => {
     setLoading(true)
     setError(null)
     try {
-      // labs.bible.org provides a free random verse JSON endpoint
-      const res = await fetch('https://labs.bible.org/api/?passage=random&type=json')
+      const res = await fetch(`/api/scripture/daily?offset=${nextOffset}`)
       if (!res.ok) throw new Error('Failed to fetch verse')
-      const data = await res.json()
-      const item = Array.isArray(data) ? data[0] : null
-      const reference = item ? `${item.bookname} ${item.chapter}:${item.verse}` : '—'
-      const text = item ? item.text : 'No verse available.'
-      setVerse({ reference, text })
+      const data = (await res.json()) as DailyVerse
+      setVerse(data)
     } catch (e: any) {
       setError(e?.message || 'Error fetching verse')
-      setVerse({ reference: 'Psalm 23:1', text: 'The Lord is my shepherd; I shall not want.' })
+      setVerse(FALLBACK)
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  useEffect(() => { fetchRandom() }, [])
+  useEffect(() => {
+    load(0)
+  }, [load])
 
-  const refresh = () => fetchRandom()
+  // "Refresh" advances the rotation to the next themed verse.
+  const refresh = useCallback(() => {
+    const next = offset + 1
+    setOffset(next)
+    load(next)
+  }, [offset, load])
 
   return { verse, loading, error, refresh }
 }

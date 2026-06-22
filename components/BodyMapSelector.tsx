@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import Card from './Card'
 import type { BodyPart } from '../types/models'
 
@@ -9,23 +9,32 @@ interface BodyMapSelectorProps {
   loading?: boolean
 }
 
-const ZONES: Array<{ bodyPart: BodyPart; label: string; x: number; y: number; width: number; height: number; rounded?: string }> = [
-  { bodyPart: 'head', label: 'Head', x: 122, y: 26, width: 56, height: 56, rounded: '999' },
-  { bodyPart: 'arms', label: 'Arms', x: 52, y: 106, width: 196, height: 72, rounded: '32' },
-  { bodyPart: 'chest', label: 'Chest', x: 92, y: 106, width: 116, height: 78, rounded: '26' },
-  { bodyPart: 'back', label: 'Back', x: 84, y: 188, width: 132, height: 54, rounded: '24' },
-  { bodyPart: 'abs', label: 'Abs', x: 112, y: 190, width: 92, height: 92, rounded: '24' },
-  { bodyPart: 'legs', label: 'Legs', x: 106, y: 284, width: 100, height: 154, rounded: '28' },
+// Non-overlapping zones on a single stylized figure. Each rect's label sits at
+// its own center so nothing collides (the previous layout overlapped arms↔chest
+// and back↔abs). viewBox 0 0 300 470.
+const ZONES: Array<{ bodyPart: BodyPart; label: string; x: number; y: number; width: number; height: number; rx: number }> = [
+  { bodyPart: 'head', label: 'Head', x: 126, y: 22, width: 48, height: 48, rx: 24 },
+  { bodyPart: 'back', label: 'Back', x: 104, y: 78, width: 92, height: 24, rx: 12 },
+  { bodyPart: 'arms', label: 'Arms', x: 64, y: 110, width: 30, height: 100, rx: 15 },
+  { bodyPart: 'chest', label: 'Chest', x: 110, y: 110, width: 80, height: 46, rx: 16 },
+  { bodyPart: 'abs', label: 'Abs', x: 114, y: 162, width: 72, height: 70, rx: 16 },
+  { bodyPart: 'legs', label: 'Legs', x: 110, y: 240, width: 80, height: 150, rx: 20 },
 ]
+// Mirror the arms zone on the right side (same bodyPart, decorative twin).
+const ARM_TWIN = { x: 206, y: 110, width: 30, height: 100, rx: 15 }
 
 export default function BodyMapSelector({ onLog, progress, unlockedAreas, loading = false }: BodyMapSelectorProps) {
   const [selected, setSelected] = useState<BodyPart | null>(null)
+  const [hovered, setHovered] = useState<BodyPart | null>(null)
   const [reps, setReps] = useState('12')
   const [sets, setSets] = useState('3')
   const [notes, setNotes] = useState('')
 
   const selectedProgress = selected ? progress[selected] : null
-  const locked = useMemo(() => new Set<BodyPart>(['head', 'arms', 'chest', 'abs', 'legs', 'back'].filter((item) => !unlockedAreas.includes(item as BodyPart)) as BodyPart[]), [unlockedAreas])
+  const locked = useMemo(
+    () => new Set<BodyPart>((['head', 'arms', 'chest', 'abs', 'legs', 'back'] as BodyPart[]).filter((item) => !unlockedAreas.includes(item))),
+    [unlockedAreas]
+  )
 
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -39,41 +48,81 @@ export default function BodyMapSelector({ onLog, progress, unlockedAreas, loadin
     setNotes('')
   }
 
+  const fillFor = (zone: BodyPart, isLocked: boolean, isSelected: boolean, isHover: boolean) => {
+    if (isLocked) return 'color-mix(in srgb, var(--theme-text-muted) 18%, transparent)'
+    if (isSelected) return 'color-mix(in srgb, var(--theme-accent) 38%, transparent)'
+    if (isHover) return 'color-mix(in srgb, var(--theme-accent) 24%, transparent)'
+    return 'color-mix(in srgb, var(--theme-accent) 13%, transparent)'
+  }
+  const strokeFor = (isLocked: boolean, isSelected: boolean) =>
+    isLocked
+      ? 'color-mix(in srgb, var(--theme-text-muted) 35%, transparent)'
+      : isSelected
+        ? 'var(--theme-accent)'
+        : 'color-mix(in srgb, var(--theme-accent) 45%, transparent)'
+
   return (
-    <Card title="Body Gate Map" subtitle="Tap a zone to forge a quick hunter workout.">
-      <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-[28px] border p-4" style={{ borderColor: 'rgba(56, 189, 248, 0.14)', background: 'linear-gradient(180deg, rgba(8, 15, 33, 0.85), rgba(2, 6, 23, 0.94))' }}>
+    <Card title="Body Gate Map" subtitle="Tap a zone to forge a quick body quest.">
+      <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
+        <div
+          className="rounded-[28px] p-4"
+          style={{ border: '1px solid var(--theme-border)', background: 'var(--theme-surface)' }}
+        >
           <svg viewBox="0 0 300 470" className="mx-auto w-full max-w-[300px]" role="img" aria-label="Clickable body map">
-            <defs>
-              <linearGradient id="body-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="rgba(56, 189, 248, 0.55)" />
-                <stop offset="100%" stopColor="rgba(14, 165, 233, 0.08)" />
-              </linearGradient>
-            </defs>
-            <path d="M150 68c-16 0-29 13-29 29v44l-60 18v39l39 14 6 58-12 118h28l18-86h20l18 86h28l-12-118 6-58 39-14v-39l-60-18V97c0-16-13-29-29-29Z" fill="url(#body-fill)" stroke="rgba(56, 189, 248, 0.18)" strokeWidth="2" />
+            {/* faint connective silhouette */}
+            <g fill="color-mix(in srgb, var(--theme-text) 5%, transparent)" stroke="var(--theme-border)" strokeWidth="1.5">
+              <rect x="118" y="96" width="64" height="160" rx="26" />
+              <rect x="120" y="232" width="60" height="170" rx="24" />
+            </g>
+
             {ZONES.map((zone) => {
               const isLocked = locked.has(zone.bodyPart)
               const isSelected = selected === zone.bodyPart
-              const zoneProgress = progress[zone.bodyPart]
+              const isHover = hovered === zone.bodyPart
+              const zp = progress[zone.bodyPart]
+              const rects = zone.bodyPart === 'arms' ? [zone, { ...zone, ...ARM_TWIN }] : [zone]
               return (
-                <g key={zone.bodyPart}>
-                  <rect
-                    x={zone.x}
-                    y={zone.y}
-                    width={zone.width}
-                    height={zone.height}
-                    rx={zone.rounded ?? '22'}
-                    fill={isLocked ? 'rgba(51, 65, 85, 0.25)' : isSelected ? 'rgba(250, 204, 21, 0.28)' : 'rgba(56, 189, 248, 0.12)'}
-                    stroke={isLocked ? 'rgba(100, 116, 139, 0.24)' : isSelected ? 'rgba(250, 204, 21, 0.85)' : 'rgba(56, 189, 248, 0.28)'}
-                    strokeWidth="2"
-                    style={{ cursor: isLocked ? 'not-allowed' : 'pointer' }}
-                    onClick={() => !isLocked && setSelected(zone.bodyPart)}
-                  />
-                  <text x={zone.x + zone.width / 2} y={zone.y + zone.height / 2 - 6} textAnchor="middle" fill="rgba(226, 232, 240, 0.92)" fontSize="12" fontFamily="Space Grotesk, sans-serif">
+                <g
+                  key={zone.bodyPart}
+                  style={{ cursor: isLocked ? 'not-allowed' : 'pointer' }}
+                  onMouseEnter={() => setHovered(zone.bodyPart)}
+                  onMouseLeave={() => setHovered(null)}
+                  onClick={() => !isLocked && setSelected(isSelected ? null : zone.bodyPart)}
+                  role="button"
+                  aria-label={`${zone.label}${isLocked ? ' (locked)' : `: ${zp.sessions} sessions`}`}
+                >
+                  {rects.map((r, i) => (
+                    <rect
+                      key={i}
+                      x={r.x}
+                      y={r.y}
+                      width={r.width}
+                      height={r.height}
+                      rx={r.rx}
+                      fill={fillFor(zone.bodyPart, isLocked, isSelected, isHover)}
+                      stroke={strokeFor(isLocked, isSelected)}
+                      strokeWidth="2"
+                    />
+                  ))}
+                  {/* label only on the primary rect */}
+                  <text
+                    x={zone.x + zone.width / 2}
+                    y={zone.y + zone.height / 2 - 4}
+                    textAnchor="middle"
+                    fontSize="12"
+                    fontWeight="600"
+                    fill="var(--theme-text)"
+                  >
                     {zone.label}
                   </text>
-                  <text x={zone.x + zone.width / 2} y={zone.y + zone.height / 2 + 12} textAnchor="middle" fill="rgba(148, 163, 184, 0.92)" fontSize="10">
-                    {isLocked ? 'Locked' : `${zoneProgress.sessions} runs`}
+                  <text
+                    x={zone.x + zone.width / 2}
+                    y={zone.y + zone.height / 2 + 12}
+                    textAnchor="middle"
+                    fontSize="9"
+                    fill="var(--theme-text-muted)"
+                  >
+                    {isLocked ? 'Locked' : `${zp.sessions} runs`}
                   </text>
                 </g>
               )
@@ -82,12 +131,14 @@ export default function BodyMapSelector({ onLog, progress, unlockedAreas, loadin
         </div>
 
         <div className="space-y-4">
-          <div className="rounded-2xl border p-4" style={{ borderColor: 'var(--theme-border)', background: 'var(--theme-surface)' }}>
-            <p className="text-xs uppercase tracking-[0.3em]" style={{ color: 'var(--theme-text-muted)' }}>Selected Zone</p>
-            <h3 className="mt-2 text-lg font-semibold" style={{ color: 'var(--theme-text)' }}>{selected ? selected[0].toUpperCase() + selected.slice(1) : 'Choose a body part'}</h3>
+          <div className="rounded-2xl p-4" style={{ border: '1px solid var(--theme-border)', background: 'var(--theme-surface)' }}>
+            <p className="text-[10px] uppercase tracking-[0.3em]" style={{ color: 'var(--theme-text-muted)' }}>Selected Zone</p>
+            <h3 className="mt-2 text-lg font-semibold" style={{ color: 'var(--theme-text)' }}>
+              {selected ? selected[0].toUpperCase() + selected.slice(1) : 'Choose a body part'}
+            </h3>
             <p className="mt-2 text-sm" style={{ color: 'var(--theme-text-dim)' }}>
               {selected
-                ? 'Log one compact set and let the hunter system convert it into progression.'
+                ? 'Log one compact set and the system turns it into progression.'
                 : 'Unlocked zones glow brighter as you train them.'}
             </p>
             {selectedProgress && selected && (
@@ -99,14 +150,14 @@ export default function BodyMapSelector({ onLog, progress, unlockedAreas, loadin
             )}
           </div>
 
-          <form onSubmit={submit} className="space-y-3 rounded-2xl border p-4" style={{ borderColor: 'var(--theme-border)', background: 'rgba(15, 23, 42, 0.55)' }}>
+          <form onSubmit={submit} className="space-y-3 rounded-2xl p-4" style={{ border: '1px solid var(--theme-border)', background: 'var(--theme-input-bg)' }}>
             <div className="grid grid-cols-2 gap-3">
-              <input value={sets} onChange={(event) => setSets(event.target.value)} className="input-base" placeholder="Sets" inputMode="numeric" />
-              <input value={reps} onChange={(event) => setReps(event.target.value)} className="input-base" placeholder="Reps" inputMode="numeric" />
+              <input value={sets} onChange={(event) => setSets(event.target.value)} className="input-base" placeholder="Sets" inputMode="numeric" aria-label="Sets" />
+              <input value={reps} onChange={(event) => setReps(event.target.value)} className="input-base" placeholder="Reps" inputMode="numeric" aria-label="Reps" />
             </div>
-            <textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows={3} className="input-base w-full" placeholder="Hunter note: movement, load, or how the set felt." />
-            <button type="submit" disabled={!selected || loading || locked.has(selected)} className="btn-accent w-full justify-center text-xs">
-              {loading ? 'Forging...' : 'Log Body Quest'}
+            <textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows={3} className="input-base w-full" placeholder="Note: movement, load, or how the set felt." />
+            <button type="submit" disabled={!selected || loading || (selected ? locked.has(selected) : false)} className="btn-accent w-full justify-center text-xs">
+              {loading ? 'Logging…' : 'Log Body Quest'}
             </button>
           </form>
         </div>

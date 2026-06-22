@@ -8,7 +8,11 @@
     "start": "next start",
     "lint": "eslint .",
     "test:smoke": "node tests/selenium/smoke.test.js",
-    "test:analytics": "tsc lib/analyticsEngine.ts --outDir .tmp-test --target es2020 --module es2020 --moduleResolution node --skipLibCheck --esModuleInterop && node tests/analytics/engine.test.mjs"
+    "test:analytics": "tsc lib/analyticsEngine.ts --outDir .tmp-test --target es2020 --module es2020 --moduleResolution node --skipLibCheck --esModuleInterop && node tests/analytics/engine.test.mjs",
+    "graph:query": "graphify query",
+    "graph:explain": "graphify explain",
+    "graph:path": "graphify path",
+    "graph:update": "graphify . --update"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",

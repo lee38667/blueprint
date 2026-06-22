@@ -49,8 +49,11 @@ coverage/
 # Claude Code worktrees
 .claude/worktrees/
 
-# graphify generated knowledge-graph output
-graphify-out/
+# graphify knowledge-graph output: commit the portable graph + report, ignore
+# the large/machine-local viewer, cache, and interpreter pointers.
+graphify-out/*
+!graphify-out/graph.json
+!graphify-out/GRAPH_REPORT.md
 
 # transpiled test artifacts
 .tmp-test/
