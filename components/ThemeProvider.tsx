@@ -5,6 +5,7 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
   const theme = useStore((state) => state.theme)
   const baseFontSize = useStore((state) => state.baseFontSize)
   const highContrastMode = useStore((state) => state.highContrastMode)
+  const animationsEnabled = useStore((state) => state.animationsEnabled)
 
   useEffect(() => {
     const config = themes[theme]
@@ -32,6 +33,10 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
     root.setAttribute('data-theme', theme)
     root.setAttribute('data-contrast', highContrastMode ? 'high' : 'normal')
   }, [highContrastMode, theme])
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-animations', animationsEnabled ? 'on' : 'off')
+  }, [animationsEnabled])
 
   useEffect(() => {
     document.documentElement.style.fontSize = `${baseFontSize}px`

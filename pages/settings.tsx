@@ -4,6 +4,8 @@ import Card from '../components/Card'
 import Toggle from '../components/Toggle'
 import { useStore, themes, type ThemeName } from '../lib/store'
 import { useCalendar } from '../hooks/useCalendar'
+import { usePush } from '../hooks/usePush'
+import { useFitness } from '../hooks/useFitness'
 import { useEffect, useState } from 'react'
 import { useProfile, type ProfilePayload } from '../hooks/useProfile'
 import Button from '../components/Button'
@@ -28,6 +30,8 @@ export default function SettingsPage() {
   const highContrastMode = useStore((state) => state.highContrastMode)
   const setHighContrastMode = useStore((state) => state.setHighContrastMode)
   const { connected, loading, connect, disconnect } = useCalendar()
+  const push = usePush()
+  const fitness = useFitness()
   const { currentProfile, loading: profileLoading, saving: profileSaving, error: profileError, saveProfile } = useProfile()
   const [profileForm, setProfileForm] = useState<ProfilePayload>(currentProfile)
 
@@ -40,6 +44,12 @@ export default function SettingsPage() {
     if (params.get('calendar_connected') || params.get('calendar_error')) {
       if (params.get('calendar_error')) {
         console.error('Calendar connection error:', params.get('calendar_error'))
+      }
+      window.history.replaceState({}, '', '/settings')
+    }
+    if (params.get('fitness_connected') || params.get('fitness_error')) {
+      if (params.get('fitness_error')) {
+        console.error('Google Fit connection error:', params.get('fitness_error'))
       }
       window.history.replaceState({}, '', '/settings')
     }
@@ -246,6 +256,61 @@ export default function SettingsPage() {
                 <button onClick={connect} className="btn-accent px-4 py-2 rounded text-sm">
                   Connect Calendar
                 </button>
+              )}
+            </div>
+
+            {/* Google Fit / Galaxy Watch */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4" style={{ borderTop: '1px solid var(--theme-border)' }}>
+              <div>
+                <div className="text-sm" style={{ color: 'var(--theme-text-dim)' }}>Google Fit (Galaxy Watch)</div>
+                <div className="text-xs" style={{ color: 'var(--theme-text-muted)' }}>
+                  {fitness.connected ? 'Connected — steps, sleep & heart rate sync to your dashboard' : 'Connect to import steps, sleep & heart rate'}
+                </div>
+              </div>
+              {fitness.loading ? (
+                <div className="text-xs" style={{ color: 'var(--theme-text-muted)' }}>Loading...</div>
+              ) : fitness.connected ? (
+                <button
+                  onClick={fitness.disconnect}
+                  className="px-4 py-2 rounded text-sm border border-red-500/50 text-red-400 hover:bg-red-500/10"
+                >
+                  Disconnect
+                </button>
+              ) : (
+                <button onClick={fitness.connect} className="btn-accent px-4 py-2 rounded text-sm">
+                  Connect Google Fit
+                </button>
+              )}
+            </div>
+
+            {/* Web Push notifications */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4" style={{ borderTop: '1px solid var(--theme-border)' }}>
+              <div>
+                <div className="text-sm" style={{ color: 'var(--theme-text-dim)' }}>Push Notifications</div>
+                <div className="text-xs" style={{ color: 'var(--theme-text-muted)' }}>
+                  {!push.supported
+                    ? 'Not supported in this browser (or VAPID keys not configured)'
+                    : push.subscribed
+                    ? 'Enabled on this device — reminders can reach you even when the tab is closed'
+                    : 'Enable browser notifications for reminders'}
+                </div>
+                {push.error && <div className="text-xs text-red-400 mt-1">{push.error}</div>}
+              </div>
+              {push.supported && (
+                push.subscribed ? (
+                  <div className="flex gap-2">
+                    <button onClick={push.sendTest} disabled={push.busy} className="px-3 py-2 rounded text-sm" style={{ border: '1px solid var(--theme-border)' }}>
+                      Test
+                    </button>
+                    <button onClick={push.unsubscribe} disabled={push.busy} className="px-4 py-2 rounded text-sm border border-red-500/50 text-red-400 hover:bg-red-500/10">
+                      Disable
+                    </button>
+                  </div>
+                ) : (
+                  <button onClick={push.subscribe} disabled={push.busy} className="btn-accent px-4 py-2 rounded text-sm">
+                    Enable
+                  </button>
+                )
               )}
             </div>
           </div>

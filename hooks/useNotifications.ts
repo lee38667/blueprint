@@ -114,6 +114,13 @@ export function useNotifications() {
             message: notification.message,
             status: 'pending'
           }))
+          // Fire a browser push for genuinely-new reminders (no-ops if push is
+          // unconfigured or the user hasn't enabled it).
+          authedFetch('/api/push/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title: notification.title, message: notification.message, body: notification.message, url: '/notifications', tag: notification.dedupKey }),
+          }).catch(() => {})
         }
       }
       await load()

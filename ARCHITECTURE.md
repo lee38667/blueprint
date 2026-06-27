@@ -60,6 +60,23 @@ Topic-based and encouraging rather than random. See
 (recovery heat) and `BodyMapSelector` (gamified body quests) render it. Gym data
 via `useGym` → `workouts` / `workout_logs`.
 
+## Integrations subsystem
+
+Free third-party integrations, all mirroring the Calendar pattern (signed OAuth
+state → AES-encrypted tokens in a `*_connections` table → user-scoped server
+helper → `useX` hook → Settings card). See [INTEGRATIONS_SETUP.md](INTEGRATIONS_SETUP.md).
+
+| Integration | Key files | Storage |
+|---|---|---|
+| **Web Push** (VAPID) | `lib/serverPush.ts`, `public/sw.js`, `api/push/*`, `hooks/usePush.ts` | `push_subscriptions` |
+| **Wger** (exercises) | `lib/wger.ts`, `api/exercises/search`, `hooks/useExerciseSearch.ts` | none (proxy) |
+| **Google Fit** (+ Galaxy Watch via Health Connect bridge) | `lib/serverFitness.ts`, `api/fitness/*`, `hooks/useFitness.ts` | `fitness_connections`, `fitness_samples` |
+| **Unsplash** (imagery) | `lib/unsplash.ts`, `api/images/search`, `hooks/useUnsplash.ts` | reuses `motivations.image_url` |
+| **Spotify** (playlist embed) | `lib/serverSpotify.ts`, `api/spotify/search`, `components/SpotifyFocus.tsx` | none (client-credentials) |
+
+New tables + RLS live in `supabase/integrations.sql`. API keys never reach the
+client — Unsplash/Spotify/Wger calls are server-side proxies behind `authGuard`.
+
 ## Cross-cutting
 
 - **Design system:** tokens + utility classes in `globals.css`; documented in

@@ -63,6 +63,14 @@ Grouped by effort. All have free tiers usable at 2-user scale.
 - **Google Calendar API** — OAuth calendar sync (free quota).
 - **Graphify** — local knowledge graph (free, OSS).
 
+### ✅ Shipped this pass (see INTEGRATIONS_SETUP.md)
+- **Web Push (VAPID)** — browser reminders, fires on new notifications.
+- **Wger** — exercise-name autocomplete in the gym logger (key-less).
+- **Google Fit** — steps/sleep/heart-rate/weight on the dashboard; also the
+  bridge for **Galaxy Watch 4** data (Samsung Health → Health Connect → Fit).
+- **Unsplash** — image search on the motivation board.
+- **Spotify** — focus/worship playlist embed on the dashboard.
+
 ### Quick wins (key-less or generous free tier)
 - **API.Bible (scripture.api.bible)** — 2,500+ versions, free key; richer than
   bible-api.com (multiple translations, audio refs) for the devotional plans.

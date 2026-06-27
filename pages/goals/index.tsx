@@ -254,7 +254,7 @@ export default function GoalsPage() {
             ) : goalInsight ? (
               <div className="space-y-3 text-sm text-neutral-200">
                 <div className="flex items-center gap-3">
-                  <div className="text-3xl font-display text-white">{goalInsight.momentumScore}</div>
+                  <div className="text-3xl font-display text-[var(--theme-text)]">{goalInsight.momentumScore}</div>
                   <div className="text-xs uppercase tracking-wide text-neutral-500">Momentum score</div>
                 </div>
                 <p>{goalInsight.summary}</p>
@@ -296,7 +296,7 @@ export default function GoalsPage() {
                 <div className="space-y-4">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <div className="text-sm font-semibold text-white">{goal.title}</div>
+                      <div className="text-sm font-semibold text-[var(--theme-text)]">{goal.title}</div>
                       {goal.category && <div className="text-[11px]" style={{ color: 'var(--theme-accent)' }}>{goal.category}</div>}
                       {goal.target_date && <div className="text-[11px] text-gray-500 mt-1">Target: {goal.target_date}</div>}
                     </div>

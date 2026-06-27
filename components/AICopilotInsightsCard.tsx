@@ -91,7 +91,7 @@ export default function AICopilotInsightsCard({
           {showWellness && insights.wellnessNote && (
             <section>
               <p className="uppercase text-xs tracking-wide text-neutral-400 mb-1">Wellness</p>
-              <p className="text-neutral-100 bg-white/5 rounded-lg p-3">{insights.wellnessNote}</p>
+              <p className="text-[var(--theme-text)] bg-[var(--theme-surface)] rounded-lg p-3">{insights.wellnessNote}</p>
             </section>
           )}
 

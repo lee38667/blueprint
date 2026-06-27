@@ -7,6 +7,7 @@ import { useGym } from '../../hooks/useGym'
 import { CardSkeleton } from '../../components/Skeleton'
 import { exportWorkoutLogsToCSV } from '../../lib/csvExport'
 import MuscleMap from '../../components/MuscleMap'
+import ExerciseAutocomplete from '../../components/ExerciseAutocomplete'
 import {
   aggregateMuscleActivity,
   muscleStatus,
@@ -486,11 +487,9 @@ export default function GymPage() {
                   <div key={i} className="rounded-xl p-3"
                     style={{ background: 'var(--theme-surface)', border: '1px solid var(--theme-border)' }}>
                     <div className="flex items-center gap-2 mb-2">
-                      <input
+                      <ExerciseAutocomplete
                         value={ex.name}
-                        onChange={(e) => updateExerciseName(i, e.target.value)}
-                        placeholder="Exercise name (e.g., Bench Press)"
-                        className="input-base flex-1"
+                        onChange={(name) => updateExerciseName(i, name)}
                       />
                       {exercises.length > 1 && (
                         <button onClick={() => removeExercise(i)} className="text-xs px-2 py-1 rounded text-red-400"

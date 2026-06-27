@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-export type ThemeName = 'dark' | 'electric' | 'midnight' | 'pink'
+export type ThemeName = 'dark' | 'electric' | 'midnight' | 'pink' | 'aozora' | 'grace'
 
 export type AccentColor = 'electric' | 'neon' | 'teal'
 
@@ -113,6 +113,52 @@ export const themes: Record<ThemeName, ThemeConfig> = {
     cardBg: 'rgba(45, 21, 37, 0.7)',
     inputBg: 'rgba(26, 10, 20, 0.5)',
     sidebarBg: 'rgba(26, 10, 20, 0.9)',
+  },
+  // Anime-inspired, masculine, HUD-confident. Dark-primary. Fonts/gradient/motif
+  // layered in globals.css via [data-theme="aozora"].
+  aozora: {
+    name: 'aozora',
+    label: 'Aozora',
+    bg: '#05080f',
+    bgGradientEnd: '#0a1120',
+    surface: 'rgba(20, 30, 54, 0.55)',
+    surfaceHover: 'rgba(30, 44, 78, 0.66)',
+    border: 'rgba(120, 160, 235, 0.18)',
+    text: '#eaf1ff',
+    textDim: '#aebbdb',
+    textMuted: '#8392b6', // AA (~7:1 on #05080f)
+    accent: '#41b3ff',
+    accentHover: '#5fbcff',
+    accentText: '#03101f',
+    scrollbarTrack: '#05080f',
+    scrollbarThumb: '#1e2c4e',
+    scrollbarHover: '#41b3ff',
+    cardBg: 'rgba(13, 20, 38, 0.62)',
+    inputBg: 'rgba(4, 8, 18, 0.6)',
+    sidebarBg: 'rgba(7, 11, 22, 0.85)',
+  },
+  // Christian, feminine, serene. The app's first LIGHT theme. Fonts/gradient/
+  // florals + light-mode shadow softening in globals.css via [data-theme="grace"].
+  grace: {
+    name: 'grace',
+    label: 'Grace & Bloom',
+    bg: '#fff6fa',
+    bgGradientEnd: '#fbe6f0',
+    surface: 'rgba(255, 255, 255, 0.74)',
+    surfaceHover: '#ffffff',
+    border: 'rgba(214, 120, 168, 0.24)',
+    text: '#54203c',
+    textDim: '#894c6d', // AA (~7:1 on #fff6fa)
+    textMuted: '#9a5a7d', // AA (~5.7:1 on #fff6fa)
+    accent: '#d6498c',
+    accentHover: '#c23a7c',
+    accentText: '#ffffff',
+    scrollbarTrack: '#fbe6f0',
+    scrollbarThumb: '#f3c4d9',
+    scrollbarHover: '#d6498c',
+    cardBg: 'rgba(255, 255, 255, 0.82)',
+    inputBg: '#fffafc',
+    sidebarBg: 'rgba(255, 245, 250, 0.9)',
   },
 }
 

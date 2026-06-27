@@ -24,7 +24,7 @@ export default function TrendIndicator({
   }
 
   return (
-    <div className={`inline-flex items-center gap-1.5 rounded-lg bg-black/40 ${sizes[size]} border border-white/10`}>
+    <div className={`inline-flex items-center gap-1.5 rounded-lg bg-[var(--theme-surface)] ${sizes[size]} border border-[var(--theme-border)]`}>
       <span className="text-lg leading-none">{trend.icon}</span>
       <div className="flex flex-col">
         {label && <span className="text-[10px] text-neutral-500 leading-tight">{label}</span>}
@@ -43,7 +43,7 @@ export default function TrendIndicator({
 export function TrendBadge({ trend }: { trend: TrendData }) {
   return (
     <span 
-      className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md bg-black/40 border border-white/10"
+      className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md bg-[var(--theme-surface)] border border-[var(--theme-border)]"
       style={{ color: trend.color }}
     >
       <span>{trend.icon}</span>

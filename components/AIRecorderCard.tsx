@@ -45,7 +45,7 @@ export default function AIRecorderCard() {
               onChange={(e) => setMessage(e.target.value)}
               placeholder="e.g., Today I weighed myself and it was 70kg"
               rows={3}
-              className="w-full px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-sm resize-none focus:border-electric/50 focus:outline-none"
+              className="w-full px-3 py-2 rounded-lg bg-[var(--theme-input-bg)] border border-[var(--theme-border)] text-sm resize-none focus:border-[var(--theme-accent)] focus:outline-none"
               disabled={loading}
             />
           </div>

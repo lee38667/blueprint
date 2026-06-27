@@ -223,7 +223,7 @@ export default function FinancePage(){
               ) : advice ? (
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center gap-3">
-                    <div className="text-3xl font-display text-white">{Math.round(advice.cashflowScore)}</div>
+                    <div className="text-3xl font-display text-[var(--theme-text)]">{Math.round(advice.cashflowScore)}</div>
                     <div className="text-xs uppercase text-neutral-500">Cashflow score</div>
                   </div>
                   <p className="text-neutral-200">{advice.outlook}</p>

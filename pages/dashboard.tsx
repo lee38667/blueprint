@@ -5,6 +5,7 @@ import Card from '../components/Card'
 import MetricCard from '../components/MetricCard'
 import EmptyState from '../components/EmptyState'
 import DailyFocusCard from '../components/DailyFocusCard'
+import QuickCapture from '../components/QuickCapture'
 import AICopilotCard from '../components/AICopilotCard'
 import ChartComponent from '../components/Chart'
 import ScriptureCard from '../components/ScriptureCard'
@@ -15,6 +16,8 @@ import FocusSessionCard from '../components/FocusSessionCard'
 import AIRecorderCard from '../components/AIRecorderCard'
 import GamificationDashboardCard from '../components/GamificationDashboardCard'
 import BodyMapSelector from '../components/BodyMapSelector'
+import FitnessSummaryCard from '../components/FitnessSummaryCard'
+import SpotifyFocus from '../components/SpotifyFocus'
 import { useDashboard } from '../hooks/useDashboard'
 import { Icons } from '../components/icons'
 import { useTasks } from '../hooks/useTasks'
@@ -57,6 +60,12 @@ export default function DashboardPage() {
   const [sleep, setSleep] = useState('')
   const [water, setWater] = useState('')
   const [stress, setStress] = useState('')
+  const [greeting, setGreeting] = useState('Welcome back')
+
+  useEffect(() => {
+    const h = new Date().getHours()
+    setGreeting(h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening')
+  }, [])
 
   useEffect(() => {
     if (notifEvalRef.current || !brainReady) return
@@ -126,14 +135,18 @@ export default function DashboardPage() {
   return (
     <Layout>
       <PageContainer className="md:space-y-8">
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-4 md:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-4 md:mb-6 fx-rise">
           <div>
-            <h1 className="heading-xl mb-1">Dashboard</h1>
-            <p className="subtle-muted text-sm">Adaptive command center with focus zones, recovery cues, and tiny-start support.</p>
+            <p className="text-xs uppercase tracking-[0.2em] mb-1" style={{ color: 'var(--theme-text-muted)' }}>
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+            </p>
+            <h1 className="heading-xl mb-1">{greeting}</h1>
+            <p className="subtle-muted text-sm">Capture a moment, then review your day below.</p>
           </div>
-          <div className="text-sm font-mono" style={{ color: 'var(--theme-text-muted)' }}>
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-          </div>
+        </div>
+
+        <div className="mb-4 md:mb-6">
+          <QuickCapture />
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
@@ -253,12 +266,15 @@ export default function DashboardPage() {
         </section>
 
         {focusZones.motivation && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-            <DailyFocusCard />
-            <MotivationQuoteCard />
-            <ScriptureCard />
-            <AICopilotInsightsCard />
-          </div>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+              <DailyFocusCard />
+              <MotivationQuoteCard />
+              <ScriptureCard />
+              <AICopilotInsightsCard />
+            </div>
+            <SpotifyFocus />
+          </>
         )}
 
         {focusZones.body && (
@@ -340,10 +356,10 @@ export default function DashboardPage() {
               <h2 className="text-xl font-display font-bold" style={{ color: 'var(--theme-text)' }}>Gym Summary</h2>
               <div className="h-px flex-1" style={{ background: 'var(--theme-border)' }} />
             </div>
+            <div className="mb-4 md:mb-6">
+              <FitnessSummaryCard />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-              <Card title="Schedule" className="min-h-[200px]">
-                <div className="h-full flex items-center justify-center subtle-muted"><span>No schedule connected.</span></div>
-              </Card>
               <Card title="Body Stats" className="min-h-[200px]">
                 <div className="flex flex-col h-full">
                   <div className="flex justify-between items-end mb-4">

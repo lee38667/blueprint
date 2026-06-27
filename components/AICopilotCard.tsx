@@ -81,13 +81,13 @@ export default function AICopilotCard() {
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setMode('record')}
-            className={`flex-1 min-w-[120px] px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${mode === 'record' ? 'bg-electric/20 border border-electric/50 text-electric' : 'bg-black/40 border border-white/10 text-neutral-400 hover:text-neutral-300'}`}
+            className={`flex-1 min-w-[120px] px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${mode === 'record' ? 'bg-electric/20 border border-electric/50 text-electric' : 'bg-[var(--theme-surface)] border border-[var(--theme-border)] text-[var(--theme-text-muted)] hover:text-[var(--theme-text-dim)]'}`}
           >
             Record data
           </button>
           <button
             onClick={() => setMode('chat')}
-            className={`flex-1 min-w-[120px] px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${mode === 'chat' ? 'bg-neon/20 border border-neon/50 text-neon' : 'bg-black/40 border border-white/10 text-neutral-400 hover:text-neutral-300'}`}
+            className={`flex-1 min-w-[120px] px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${mode === 'chat' ? 'bg-neon/20 border border-neon/50 text-neon' : 'bg-[var(--theme-surface)] border border-[var(--theme-border)] text-[var(--theme-text-muted)] hover:text-[var(--theme-text-dim)]'}`}
           >
             Get advice
           </button>
@@ -113,7 +113,7 @@ export default function AICopilotCard() {
             onChange={(event) => setInput(event.target.value)}
             placeholder={mode === 'record' ? 'e.g., Add task: pay water bill tomorrow' : 'e.g., It is 3pm and I am drifting. What should I do right now?'}
             rows={3}
-            className="w-full px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-sm resize-none focus:border-electric/50 focus:outline-none"
+            className="w-full px-3 py-2 rounded-lg bg-[var(--theme-input-bg)] border border-[var(--theme-border)] text-sm resize-none focus:border-[var(--theme-accent)] focus:outline-none"
             disabled={loading}
           />
 

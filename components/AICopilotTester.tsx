@@ -21,7 +21,7 @@ export default function AICopilotTester(){
             value={mood}
             onChange={e => setMood(e.target.value)}
             placeholder="e.g. a bit overwhelmed but motivated"
-            className="w-full rounded bg-black/40 border border-white/10 px-3 py-2 text-sm outline-none focus:border-electric"
+            className="w-full rounded bg-[var(--theme-input-bg)] border border-[var(--theme-border)] px-3 py-2 text-sm outline-none focus:border-[var(--theme-accent)]"
           />
         </div>
         <Button variant="primary" className="text-xs" disabled={loading || !mood.trim()}>

@@ -202,7 +202,7 @@ export default function GamificationDashboardCard() {
                   <span>EXP</span>
                   <span>{profile?.exp ?? 0} / {exp.threshold}</span>
                 </div>
-                <div className="h-3 overflow-hidden rounded-full bg-black/30">
+                <div className="h-3 overflow-hidden rounded-full bg-[var(--theme-surface)]">
                   <motion.div
                     className="h-full rounded-full"
                     animate={{ width: `${exp.percent}%` }}
