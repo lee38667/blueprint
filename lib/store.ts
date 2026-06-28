@@ -199,7 +199,7 @@ export const useStore = create<ThemeState>()(
       toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
       mobileSidebarOpen: false,
       setMobileSidebarOpen: (open) => set(() => ({ mobileSidebarOpen: open })),
-      theme: 'dark' as ThemeName,
+      theme: 'aozora' as ThemeName,
       setTheme: (theme) => set(() => ({ theme })),
       accentColor: 'electric' as AccentColor,
       setAccentColor: (accent) => set(() => ({ accentColor: accent })),

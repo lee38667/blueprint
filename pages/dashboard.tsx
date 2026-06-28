@@ -135,15 +135,24 @@ export default function DashboardPage() {
   return (
     <Layout>
       <PageContainer className="md:space-y-8">
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-4 md:mb-6 fx-rise">
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] mb-1" style={{ color: 'var(--theme-text-muted)' }}>
-              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-            </p>
-            <h1 className="heading-xl mb-1">{greeting}</h1>
-            <p className="subtle-muted text-sm">Capture a moment, then review your day below.</p>
+        <header
+          className="fx-rise relative overflow-hidden rounded-2xl mb-4 md:mb-6 p-6 md:p-7"
+          style={{ border: '1px solid var(--theme-border)', background: 'var(--theme-card-bg)', boxShadow: 'var(--shadow-lg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
+        >
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--theme-accent) 12%, transparent), transparent 58%)' }}
+          />
+          <div className="relative flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] mb-2" style={{ color: 'var(--theme-text-muted)' }}>
+                {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+              </p>
+              <h1 className="heading-xl mb-1">{greeting}</h1>
+              <p className="subtle-muted text-sm">Capture a moment, then review your day below.</p>
+            </div>
           </div>
-        </div>
+        </header>
 
         <div className="mb-4 md:mb-6">
           <QuickCapture />
