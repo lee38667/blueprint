@@ -158,7 +158,8 @@ export default function DashboardPage() {
           <QuickCapture />
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-5 items-start">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 md:col-span-12">
           <MetricCard label="Done today" value={glance.doneToday} tone="success" icon={<Icons.Check size="sm" />} />
           <MetricCard label="Open tasks" value={glance.open} />
           <MetricCard
@@ -174,7 +175,7 @@ export default function DashboardPage() {
           />
         </div>
 
-        <Card title="Focus Zones">
+        <Card title="Focus Zones" className="md:col-span-12">
           <div className="flex flex-wrap gap-2">
             {ZONES.map((zone) => (
               <button
@@ -193,13 +194,13 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        {focusZones.briefing && <DailyBriefingCard />}
+        {focusZones.briefing && <div className="md:col-span-12"><DailyBriefingCard /></div>}
 
-        <GamificationDashboardCard />
+        <div className="md:col-span-8"><GamificationDashboardCard /></div>
 
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+          <>
           {focusZones.metrics && (
-            <Card title="Financial Snapshot">
+            <Card title="Financial Snapshot" className="md:col-span-4">
               {loading ? (
                 <CardSkeleton className="h-24" />
               ) : (
@@ -227,7 +228,7 @@ export default function DashboardPage() {
           )}
 
           {focusZones.metrics && (
-            <Card title="Quick Tasks">
+            <Card title="Quick Tasks" className="md:col-span-4">
               <div className="space-y-2">
                 {quickTasks.length === 0 ? (
                   <EmptyState variant="compact" title="No open tasks" description="Add some on the Tasks page." />
@@ -251,12 +252,12 @@ export default function DashboardPage() {
             </Card>
           )}
 
-          {focusZones.ai && <AICopilotCard />}
-        </section>
+          {focusZones.ai && <div className="md:col-span-4"><AICopilotCard /></div>}
+          </>
 
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-          <FocusSessionCard snapshot={{ moods: snapshot.moods, bodyStats: snapshot.bodyStats }} rewardMessage={rewardMessage} />
-          <Card title="Attention Signals">
+          <>
+          <div className="md:col-span-4"><FocusSessionCard snapshot={{ moods: snapshot.moods, bodyStats: snapshot.bodyStats }} rewardMessage={rewardMessage} /></div>
+          <Card title="Attention Signals" className="md:col-span-4">
             <div className="space-y-3 text-sm">
               <div className="rounded-xl p-3" style={{ background: 'var(--theme-surface)', border: '1px solid var(--theme-border)' }}>
                 <p className="text-xs uppercase tracking-wide mb-1" style={{ color: 'var(--theme-text-muted)' }}>Easy win</p>
@@ -271,23 +272,23 @@ export default function DashboardPage() {
               {attention.cbtTip && <p style={{ color: 'var(--theme-text-dim)' }}>{attention.cbtTip}</p>}
             </div>
           </Card>
-          <AIRecorderCard />
-        </section>
+          <div className="md:col-span-4"><AIRecorderCard /></div>
+          </>
 
         {focusZones.motivation && (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            <div className="md:col-span-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
               <DailyFocusCard />
               <MotivationQuoteCard />
               <ScriptureCard />
               <AICopilotInsightsCard />
             </div>
-            <SpotifyFocus />
+            <div className="md:col-span-12"><SpotifyFocus /></div>
           </>
         )}
 
         {focusZones.body && (
-          <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+          <section className="md:col-span-12 grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
             <Card title="Body Stats Quick Log">
               <form onSubmit={handleBodySubmit} className="grid grid-cols-2 gap-3">
                 <input type="number" step="0.1" value={weight} onChange={(event) => setWeight(event.target.value)} placeholder="Weight" className="input-base" />
@@ -331,7 +332,7 @@ export default function DashboardPage() {
         )}
 
         {focusZones.body && (
-          <section className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
+          <section className="md:col-span-12 grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
             <Card title="Recent Body Metrics">
               <div className="space-y-2">
                 {recentStats.length === 0 ? (
@@ -360,7 +361,7 @@ export default function DashboardPage() {
         )}
 
         {focusZones.gym && (
-          <section>
+          <section className="md:col-span-12">
             <div className="flex items-center gap-4 mb-6">
               <h2 className="text-xl font-display font-bold" style={{ color: 'var(--theme-text)' }}>Gym Summary</h2>
               <div className="h-px flex-1" style={{ background: 'var(--theme-border)' }} />
@@ -388,6 +389,7 @@ export default function DashboardPage() {
             </div>
           </section>
         )}
+        </div>
       </PageContainer>
     </Layout>
   )
